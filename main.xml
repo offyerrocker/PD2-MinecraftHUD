@@ -1,0 +1,6 @@
+<mod name="MinecraftHUD" author="Offyerrocker" color="Color(0.2,0.9,0.1)" >
+	<DISABLEDAssetUpdates id="27955" version="1" provider="modworkshop" install_directory = "mods/" />
+	<Localization directory="loc" default="english.txt">
+		<loc file="english.json" language="english" />
+	</Localization>
+</mod>

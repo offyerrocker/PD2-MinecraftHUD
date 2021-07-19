@@ -1,0 +1,66 @@
+{
+	"menu_id" : "mchud_menu_main",
+	"parent_menu_id" : "blt_options",
+	"title" : "menu_minecrafthud",
+	"back_callback" : "callback_mchud_close",
+	"DISABLED______items" : [
+		{
+			"type" : "toggle",
+			"id" : "id_mchud_toggle_1",
+			"title" : "mchud_toggle_title_1",
+			"description" : "mchud_toggle_desc_1",
+			"callback" : "callback_mchud_toggle_1",
+			"value" : "mchud_toggle_1"
+		},
+		{
+			"type" : "divider",
+			"size" : 8
+		},
+		{
+			"type" : "multiple_choice",
+			"id" : "id_mchud_multiplechoice_1",
+			"title" : "mchud_multiplechoice_title_1",
+			"description" : "mchud_multiplechoice_desc_1",
+			"callback" : "callback_mchud_multiplechoice_1",
+			"items" : [
+				"mchud_multchoice_1a",
+				"mchud_multchoice_1b",
+				"mchud_multchoice_1c",
+				"mchud_multchoice_1d"
+			],
+			"value" : "mchud_multiplechoice_1"
+		},
+		{
+			"type" : "divider",
+			"size" : 8
+		},
+		{
+			"type" : "slider",
+			"id" : "id_mchud_slider_1",
+			"title" : "mchud_slider_title_1",
+			"description" : "mchud_slider_desc_1",
+			"callback" : "callback_mchud_slider_1",
+			"value" : "mchud_slider_1",
+			"default_value" : 1,
+			"min" : 0,
+			"max" : 100,
+			"step" : 1
+		},
+		{
+			"type" : "button",
+			"id" : "id_mchud_button_1",
+			"title" : "mchud_button_title_1",
+			"description" : "mchud_button_desc_1",
+			"callback" : "callback_mchud_button_1"
+		},
+		{
+			"type" : "keybind",
+			"id" : "id_mchud_keybind_1",
+			"title" : "mchud_keybind_title_1",
+			"description" : "mchud_keybind_desc_1",
+			"keybind_id" : "keybindid_mchud_keybind_1",
+			"run_in_game" : true,
+			"func" : "mchud_keybind_func_1"
+		}
+	]
+}

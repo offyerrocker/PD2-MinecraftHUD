@@ -1,0 +1,21 @@
+{
+	"name" : "MinecraftHUD",
+	"description" : "Adds a HUD styled after Minecraft (2010)",
+	"author" : "Offyerrocker",
+	"contact" : "Discord: Offyerrocker#3878",
+	"version" : "0.01",
+	"blt_version" : 2,
+	"image" : "icon.png",
+	"priority" : 1,
+	"color" : "64 200 32",
+	"hooks" : [
+		{
+			"hook_id" : "lib/managers/menumanager",
+			"script_path" : "lua/menumanager.lua"
+		},
+		{
+			"hook_id" : "lib/managers/hud/hudteammate",
+			"script_path" : "lua/hudteammate.lua"
+		}
+	]
+}
