@@ -1,9 +1,12 @@
+local debug_rect_visible = false
+
 Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teammates_panel, is_player, width)
 	if not self._main_player then return end
 	
 --get some useful minecrafthud "tweakdata" values
 	local mctd = MinecraftHUD._hud_data
 	local texture_data = MinecraftHUD._textures
+	local font_data = MinecraftHUD._fonts
 	local scale = 1
 	if self._main_player then
 		scale = scale * MinecraftHUD:GetPlayerScale()
@@ -14,81 +17,197 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 	local HUNGER_TICKS = mctd.hunger_ticks
 	local ARMOR_TICKS = mctd.armor_ticks
 	local HOTBAR_SLOTS = mctd.hotbar_slots
-	
 	local get_icon = MinecraftHUD.get_atlas_icon
-	
+	local DEFAULT_SIZE = 36
+	local level_font_size = 64
+	local hotbar_counter_font_size = 32
+	local hotbar_offhand_x_offset = 128
 --main mchud panel for any given criminal
-	local teammate_panel = teammates_panel:panel({
-		name = "mchud_" .. tostring(i)
+	local teammate_panel = managers.hud._saferect:panel():panel({
+		name = "mchud_" .. tostring(_i)
 	})
+	teammate_panel:rect({name="debug",color=Color.red,alpha=0.1,visible=debug_rect_visible})
+	MinecraftHUD._cache.teammate_panels[_i] = { panel = teammate_panel }
 
 --set some useful alignment variables
-	local hotbar_bottom_margin = 64 --space between hotbar bottom and screen bottom edge
+	local hotbar_bottom_margin = 0 --space between hotbar bottom and screen bottom edge
 	local xp_bottom_margin = 10 --space between xp bar bottom and hotbar
-	local vitals_bottom_margin = 4 --space between vitals bottom and xp bar
-	local center_y = teammate_panel:h() / 2
-	local center_x = teammate_panel:w() / 2
+	local vitals_bottom_margin = -32 --space between vitals bottom and xp bar
+	--local center_y = teammate_panel:h() / 2
+	
+--	local center_x = teammate_panel:w() / 2
 	
 --subpanel creation
 	local hotbar_panel = teammate_panel:panel({
 		name = "hotbar_panel",
-		visible = self._main_player
+		visible = self._main_player,
+		h = 100
 	})
-	hotbar_panel:set_bottom(-hotbar_bottom_margin)
+	hotbar_panel:set_bottom(teammate_panel:h())
+	
+	hotbar_panel:rect({
+		name = "debug",
+		color = Color.blue,
+		alpha = 0.1,
+		visible = debug_rect_visible
+	})
 	
 	local hotbar_bg = hotbar_panel:bitmap({
 		name = "hotbar_bg",
-		texture = texture_data.hotbar.path
+		texture = texture_data.hotbar.path,
+		layer = 2
 	})
+	hotbar_bg:set_x((hotbar_panel:w() - hotbar_bg:w()) / 2)
+	hotbar_bg:set_y(hotbar_panel:h() - (hotbar_bg:h() + hotbar_bottom_margin))
 	--todo populate hotbar
+	local item_w = 72 * scale
+	local item_h = 72 * scale
+	local item_h_margin = 8
+	local item_offset_x = hotbar_bg:x() + item_h_margin
+	local item_offset_y = hotbar_bg:y() + 8
 	for i=1,HOTBAR_SLOTS,1 do
-		local item_w = 36 * scale
-		local item_h = 36 * scale
-		local item_offset_x = 0
-		local item = hotbar:panel({
+		local item = hotbar_panel:panel({
 			name = "item_" .. tostring(i),
-			x = item_offset_x + (item_w * scale),
-			y = 0,
+			x = item_offset_x + ((i - 1) * ((item_w + item_h_margin) * scale)),
+			y = item_offset_y,
 			w = item_w,
 			h = item_h,
+			layer = 3,
 			visible = false
 		})
 		local counter_top = item:text({
 			name = "counter_top",
 			font = font_data.minecraft,
-			font_size = 12,
+			font_size = hotbar_counter_font_size,
 			text = "",
 			color = Color.white,
 			align = "right",
-			vertical = "top"
+			vertical = "top",
+			layer = 5
 		})
 		local counter_bottom = item:text({
 			name = "counter_bottom",
 			font = font_data.minecraft,
-			font_size = 12,
+			font_size = hotbar_counter_font_size,
 			text = "",
 			color = Color.white,
 			align = "right",
-			vertical = "bottom"
+--			vertical = "bottom", --this is broken for some custom fonts randomly. dunno.
+			y = item_h - (hotbar_counter_font_size / 1.5),
+			layer = 6
+		})
+			
+		local durability_meter = item:rect({
+			name = "durability_meter",
+			color = MinecraftHUD._color_data.durability_high,
+			w = item_w * 0.9,
+			h = 4,
+			y = item:h() - 8,
+			layer = 8,
+			visible = false
+		})
+		durability_meter:set_x((item:w() - durability_meter:w()) / 2)
+		local durability_meter_bg = item:rect({
+			name = "durability_meter_bg",
+			color = MinecraftHUD._color_data.durability_bg,
+			w = item_w * 0.9,
+			h = 6,
+			x = durability_meter:x(),
+			y = item:h() - 8,
+			layer = 7,
+			visible = false
 		})
 		local bitmap = item:bitmap({
 			name = "bitmap",
-			texture = ""
+			texture = "",
+			w = item_w,
+			h = item_h,
+			layer = 4,
+			alpha = 0.8,
+			visible = false
 		})
-		bitmap:set_center(item:center())
+		bitmap:set_center(item:w()/2,item:h()/2)
 		
 		local debug_rect = item:rect({
 			name = "debug",
 			color = Color(math.random(),math.random(),math.random()),
-			alpha = 0.1
+			alpha = 0.1,
+			visible = debug_rect_visible
 		})
 	end
+	
+	local hotbar_offhand_panel = hotbar_panel:panel({
+		name = "hotbar_offhand_panel",
+		w = item_w,
+		h = item_h,
+		x = hotbar_bg:x() - hotbar_offhand_x_offset,
+		y = hotbar_bg:y(),
+		layer = 2,
+		visible = false
+	})
+	local hotbar_offhand_bg = hotbar_offhand_panel:bitmap({
+		name = "hotbar_offhand_bg",
+		texture = "",
+		layer = 3
+	})
+	local hotbar_offhand_counter_top = hotbar_offhand_panel:text({
+		name = "counter_top",
+		font = font_data.minecraft,
+		font_size = hotbar_counter_font_size,
+		text = "",
+		color = Color.white,
+		align = "right",
+		vertical = "top",
+		layer = 5
+	})
+	local hotbar_offhand_counter_bottom = hotbar_offhand_panel:text({
+		name = "counter_bottom",
+		font = font_data.minecraft,
+		font_size = hotbar_counter_font_size,
+		text = "",
+		color = Color.white,
+		align = "right",
+		vertical = "bottom",
+		y = item_h - (hotbar_counter_font_size / 1.5),
+		layer = 6
+	})
+	local hotbar_offhand_bitmap = hotbar_offhand_panel:bitmap({
+		name = "bitmap",
+		texture = "",
+		visible = false
+		layer = 4
+	})
+	local hotbar_offhand_durability_meter = hotbar_offhand_panel:rect({
+		name = "durability_meter",
+		color = MinecraftHUD._color_data.durability_high,
+		w = 32,
+		h = 4,
+		y = hotbar_offhand_panel:h() - 8,
+		layer = 8,
+		visible = false
+	})
+	hotbar_offhand_durability_meter:set_x((hotbar_offhand_panel:w() - hotbar_offhand_durability_meter:w()) / 2)
+	local hotbar_offhand_durability_meter_bg = hotbar_offhand_panel:rect({
+		name = "durability_meter_bg",
+		color = MinecraftHUD._color_data.durability_bg,
+		w = 32,
+		h = 6,
+		x = hotbar_offhand_durability_meter:x(),
+		y = hotbar_offhand_panel:h() - 8,
+		layer = 7,
+		visible = false
+	})
 	
 	
 	local xp_panel = teammate_panel:panel({
 		name = "xp_panel",
-		w = 700,
-		h = 400
+		h = 72
+	})
+	xp_panel:rect({
+		name = "debug",
+		color = Color.green,
+		alpha = 0.1,
+		visible = debug_rect_visible
 	})
 	xp_panel:set_bottom(hotbar_panel:y() - xp_bottom_margin)
 	
@@ -131,28 +250,24 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 		name = "level",
 		text = tostring(managers.experience and managers.experience:current_level() or "0"),
 		color = MinecraftHUD._color_data.xp_counter,
-		font = MinecraftHUD._fonts.minecraft,
-		font_size = 24,
+		font = font_data.minecraft,
+		font_size = level_font_size,
 		layer = 5,
 		align = "center",
 --		vertical = "bottom",
-		y = xp_empty:y()
+		y = xp_empty:y() - (level_font_size / 2)
 	})
 
-
-	
 
 	--health/armor/stamina etc
 	local vitals_panel = teammate_panel:panel({
 		name = "vitals_panel",
-		w = 700,
-		h = 400,
-		x = 0,
-		y = 0
+--		w = 700,
+		h = 400
 	})
 	vitals_panel:set_bottom(xp_panel:y() - vitals_bottom_margin)
 	local health_y = vitals_panel:h()
-
+	local center_x = vitals_panel:w() / 2
 	for i = 1,ARMOR_TICKS do 
 		vitals_panel:bitmap({
 			name = "armor_tick_" .. i,
@@ -161,7 +276,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
 			x = center_x - ((i + 1) * DEFAULT_SIZE),
-			y = health_y - (DEFAULT_SIZE),
+			y = health_y - (DEFAULT_SIZE * 2.1),
 			layer = 3
 		})
 	end
@@ -173,18 +288,17 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
 			x = center_x - ((i + 1) * DEFAULT_SIZE),
-			y = health_y,
+			y = health_y - (DEFAULT_SIZE),
 			layer = 3
 		})
-		--[[
 		vitals_panel:bitmap({
-			name = "health_bg_" .. i,
-			texture = "textures/minecraft_atlas",
+			name = "health_tick_bg_" .. i,
+			texture = texture_data.atlas.path,
 			texture_rect = get_icon("health_empty_black"),
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
 			x = center_x - ((i + 1) * DEFAULT_SIZE),
-			y = health_y,
+			y = health_y - (DEFAULT_SIZE),
 			layer = 2
 		})
 		--]]
@@ -198,26 +312,33 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
 			x = center_x + ((i - 0) * DEFAULT_SIZE),
-			y = health_y,
+			y = health_y - (DEFAULT_SIZE),
 			layer = 3
 		})
-		--[[
 		vitals_panel:bitmap({
-			name = "hunger_bg_" .. i,
-			texture = "textures/minecraft_atlas",
+			name = "hunger_tick_bg_" .. i,
+			texture = texture_data.atlas.path,
 			texture_rect = get_icon("hunger_empty_black"),
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
 			x = center_x + ((i - 0) * DEFAULT_SIZE),
-			y = health_y,
+			y = health_y - (DEFAULT_SIZE),
 			layer = 2
 		})
-		--]]
 	end
 	
 	
 	
 end)
 
+Hooks:PostHook(HUDTeammate,"set_health","mchud_teammate_sethealth",function(self,data)
+	MinecraftHUD:SetHealth(self._id,data.current,data.total)
+end)
 
+Hooks:PostHook(HUDTeammate,"set_armor","mchud_teammate_setarmor",function(self,data)
+	MinecraftHUD:SetArmor(self._id,data.current,data.total)
+end)
 
+Hooks:PostHook(HUDTeammate,"set_callsign","mchud_teammate_setcallsign",function(self,num)
+	MinecraftHUD:SetPlayerLevel(self._id,tostring(managers.experience and managers.experience:current_level() or "0"))
+end)
