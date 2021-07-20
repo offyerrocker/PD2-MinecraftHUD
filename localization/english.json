@@ -1,4 +1,8 @@
 {
 	"menu_mchud" : "MinecraftHUD",
-	"menu_mchud_desc" : "The best 16-bit HUD around"
+	"menu_mchud_desc" : "The best 16-bit HUD around",
+	"mchud_set_player_hud_scale_title" : "Set Player HUD Scale",
+	"mchud_set_player_hud_scale_desc" : "Set the size multiplier for your HUD",
+	"mchud_set_team_hud_scale_title" : "Set Team HUD Scale",
+	"mchud_set_team_hud_scale_desc" : "Set the size multiplier for your Team HUD"
 }
