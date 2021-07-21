@@ -187,16 +187,6 @@ MinecraftHUD._hud_data = {
 	end
 }
 
-function MinecraftHUD.get_atlas_icon(name)
-	local item = (type(name) == "table" and name) or MinecraftHUD._hud_data.atlas[name]
-	if item then 
-		local x,y,size = unpack(item)
-		size = size or MinecraftHUD._hud_data.size
-		return {size * x, size * y, size, size}
-	end
-	return {0,0,size,size}
-end
-
 MinecraftHUD.settings = MinecraftHUD.settings or {}
 MinecraftHUD.default_settings = MinecraftHUD.default_settings or {
 	real_ammo_display = true,
@@ -221,6 +211,20 @@ MinecraftHUD._cache = {
 	}
 }
 
+
+------------------------------utils
+
+
+function MinecraftHUD.get_atlas_icon(name)
+	local item = (type(name) == "table" and name) or MinecraftHUD._hud_data.atlas[name]
+	if item then 
+		local x,y,size = unpack(item)
+		size = size or MinecraftHUD._hud_data.size
+		return {size * x, size * y, size, size}
+	end
+	return {0,0,size,size}
+end
+
 function MinecraftHUD:log(a,...)
 	if Console then 
 		Console:Log("MinecraftHUD: " .. tostring(a),...)
@@ -231,6 +235,7 @@ end
 
 
 
+------------------------------/utils
 ------------------------------settings getters
 
 function MinecraftHUD:GetPlayerScale()
@@ -252,10 +257,10 @@ end
 function MinecraftHUD:IsRealAmmoDisplayEnabled()
 	return self.settings.real_ammo_display
 end
+
 ------------------------------/settings getters
-
-
 -------------------------------visual HUD setters
+
 function MinecraftHUD:SetExperienceProgress(percent)
 	local scale = self:GetPlayerScale()
 	local w,h = unpack(self._textures.xp_full.size)
@@ -273,7 +278,7 @@ function MinecraftHUD:SetExperienceProgress(percent)
 	
 end
 
---sets the amount of potential xp gained from 
+--sets the amount of potential xp gained from completing the current heist
 function MinecraftHUD:SetExperiencePotential(xp)
 	if not managers.experience then 
 		return
@@ -530,7 +535,8 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 			if texture then 
 				done_any = true
 				bitmap:set_image(texture,texture_rect and unpack(texture_rect))
-				bitmap:set_size(item:size())
+--				bitmap:set_size(item:size())
+--				bitmap:set_center(item:w() / 2,item:h() / 2)
 				bitmap:show()
 			end
 		elseif icon == false then
@@ -543,68 +549,6 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 end
 
 -------------------------------/visual HUD setters
---[[
-local panel = MinecraftHUD._cache.teammate_panels[4].panel:child("vitals_panel")
-adf = panel:animate(MinecraftHUD._animate_health_bar_wiggle,10,20,64,panel:h() - 36)
-return adf
-
-local weapons = {"new_raging_bull","s552","ppk","g3","huntsman","hk21","gre_m79","galil","deagle"}
-for i,weapon in ipairs(weapons) do 
-	MinecraftHUD:LoadWeaponIcon(weapon)
-	MinecraftHUD:SetHotbarIcon(i,weapon,"weapon",math.random(100),math.random(50),nil)
-end
-	MinecraftHUD:SetHotbarIcon(1,"msr","weapon",math.random(100),math.random(50),nil)
-
-	MinecraftHUD:SetHotbarIcon(2, "s552", "weapon", nil, nil, nil, false)
- MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("counter_bottom"):set_font_size(64)
-return MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):visible()
-MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):set_size(72,72)
-
-MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._weapon_icons.msr.path)
-MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._weapon_icons.ppk.path)
-
-MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._textures.bow_icon.path)
-
-MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):set_image(MinecraftHUD.get_atlas_icon("hunger_empty_black"))
-
-MinecraftHUD:SetHotbarIcon(1,"bow_standby","texture",0,0,false)
-
-
-for i = 3, 9,1 do 
-	MinecraftHUD:SetHotbarIcon(i,false,nil,"","",false)
-end
-MinecraftHUD:SetHotbarIcon(2,"aa12","weapon",12,40,false)
-MinecraftHUD:SetHotbarIcon(1,"p226","weapon","",456,0.2)
-
-
-
-managers.dyn_resource:load(Idstring("texture"), Idstring(MinecraftHUD._weapon_icons.p226.path), DynamicResourceManager.DYN_RESOURCES_PACKAGE)
-managers.dyn_resource:load(Idstring("texture"), Idstring(MinecraftHUD._weapon_icons.msr.path), DynamicResourceManager.DYN_RESOURCES_PACKAGE)
-
-
-
-
-
-
-
-
-
-
-MinecraftHUD:SetHotbarIcon(3,"ak5","weapon")
-	
-	local dyn_pkg = DynamicResourceManager.DYN_RESOURCES_PACKAGE
-	local tids = Idstring("texture")
-	for weapon,data in pairs(MinecraftHUD._weapon_icons) do 
-		local a = DB:has(tids,data.path)
-		local b = managers.dyn_resource:is_resource_ready(tids,Idstring(data.path),dyn_pkg)
-		
-		log("Item " .. tostring(weapon) .. " of index " .. tostring(data.index) .. " readiness: " .. tostring(a)  .. "/" .. tostring(b))
---BLT.AssetManager:CreateEntry(Idstring(path),texture_ids,asset_path)
-	end
-	
-
-
---]]
 -------------------------------HUD animations
 function MinecraftHUD._animate_health_bar_wiggle(vitals_panel,ticks,speed,vertical_amount,y_orig)
 	ticks = ticks or MinecraftHUD._hud_data.health_ticks
@@ -615,18 +559,15 @@ function MinecraftHUD._animate_health_bar_wiggle(vitals_panel,ticks,speed,vertic
 	while abutd do 
 		local dt = coroutine.yield()
 		t = t + dt
-		Console:SetTrackerValue("trackerb",tostring(t))
-		for i = 1,ticks,-1 do 
+		for i = ticks,1,-1 do 
 			local tick = vitals_panel:child("health_tick_" .. tostring(i))
 			if alive(tick) then 
 				local tick_bg = vitals_panel:child("health_tick_bg_" .. tostring(i))
-				local y_offset = y_orig + (vertical_amount * math.sin((speed * t) + (60 * i)))
-				Console:SetTrackerValue("trackerc",tostring(y_offset))
-				
+				local y_offset = y_orig + (vertical_amount * math.round(math.sin((speed * t) + (60 * i))) )
 				tick:set_y(y_offset)
 				tick_bg:set_y(y_offset)
 			else
-				break
+--				break
 			end
 		end
 	end
@@ -684,9 +625,6 @@ function MinecraftHUD:CheckResourcesAdded(skip_load)
 	
 end
 
-Hooks:Add("BaseNetworkSessionOnLoadComplete","mchud_basenetworkload",function() --PlayerManager_on_internal_load
-	MinecraftHUD:CheckResourcesReady()
-end)
 --Loads assets into memory so that they can be used in-game
 function MinecraftHUD:CheckResourcesReady(skip_load,done_loading_cb)
 --	self:log("MinecraftHUD Checking font assets...")
@@ -768,6 +706,7 @@ function MinecraftHUD:LoadWeaponIcon(id,index)
 end
 
 -------------------------------/asset loading
+-------------------------------menus and localization
 
 Hooks:Add("LocalizationManagerPostInit","mchud_load_localization",function(self)
 	if BeardLib then 
@@ -824,6 +763,9 @@ Hooks:Add( "MenuManagerInitialize", "mchud_init_menumanager", function(menu_mana
 	MenuHelper:LoadFromJsonFile(MinecraftHUD._main_menu_path, MinecraftHUD, MinecraftHUD.settings)
 end)
 
+-------------------------------/menus and localization
+
+-------------------------------initialization
 MinecraftHUD:LoadSettings()
 
 --register weapon icons, to be loaded later
@@ -881,3 +823,101 @@ else
 end
 
 MinecraftHUD:CheckResourcesAdded()
+MinecraftHUD:CheckResourcesReady()
+--Hooks:Add("BaseNetworkSessionOnLoadComplete","mchud_basenetworkload",function() end)
+
+-------------------------------/initialization
+
+
+
+
+
+
+
+abutd=true
+--[[
+
+
+
+
+
+local panel = MinecraftHUD._cache.teammate_panels[4].panel:child("vitals_panel")
+panel:stop()
+adf = panel:animate(MinecraftHUD._animate_health_bar_wiggle,10,800,6,panel:h() - 36)
+return adf
+
+local weapons = {"new_raging_bull","s552","ppk","g3","huntsman","hk21","gre_m79","galil","deagle"}
+for i,weapon in ipairs(weapons) do 
+	MinecraftHUD:LoadWeaponIcon(weapon)
+	MinecraftHUD:SetHotbarIcon(i,weapon,"weapon",math.random(100),math.random(50),nil)
+end
+
+MinecraftHUD:SetHotbarIcon(2, "s552", "weapon", nil, nil, nil, false)
+MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("counter_bottom"):set_font_size(64)
+MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):set_size(72,72)
+
+MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._weapon_icons.msr.path)
+
+MinecraftHUD:SetHotbarIcon(1,"bow_standby","texture",0,0,false)
+
+
+for i = 3, 9,1 do 
+	MinecraftHUD:SetHotbarIcon(i,false,nil,"","",false)
+end
+MinecraftHUD:SetHotbarIcon(2,"aa12","weapon",12,40,false)
+MinecraftHUD:SetHotbarIcon(1,"p226","weapon","",456,0.2)
+
+
+
+managers.dyn_resource:load(Idstring("texture"), Idstring(MinecraftHUD._weapon_icons.p226.path), DynamicResourceManager.DYN_RESOURCES_PACKAGE)
+managers.dyn_resource:load(Idstring("texture"), Idstring(MinecraftHUD._weapon_icons.msr.path), DynamicResourceManager.DYN_RESOURCES_PACKAGE)
+
+
+
+
+
+
+
+local function safe_load( path, ext )
+    -- Does it exist?
+    if managers.dyn_resource and DB:has( ext, path ) then
+        local asset_type = Idstring(ext)
+        local asset_path = Idstring(path)
+        local asset_package = DynamicResourceManager.DYN_RESOURCES_PACKAGE
+
+        -- Check if it's loaded.
+        local key = managers.dyn_resource._get_resource_key( asset_type, asset_path, asset_package )
+        local entry = managers.dyn_resource._dyn_resources[key]
+
+        if not entry then
+            -- Unload it.
+            managers.dyn_resource:load( asset_type, asset_path, asset_package, false )
+        end
+
+        -- Success!
+        return true
+    end
+
+    -- Failure!
+    return false
+end
+
+
+
+
+
+MinecraftHUD:SetHotbarIcon(3,"ak5","weapon")
+	
+	local dyn_pkg = DynamicResourceManager.DYN_RESOURCES_PACKAGE
+	local tids = Idstring("texture")
+	for weapon,data in pairs(MinecraftHUD._weapon_icons) do 
+		local a = DB:has(tids,data.path)
+		local b = managers.dyn_resource:is_resource_ready(tids,Idstring(data.path),dyn_pkg)
+		
+		log("Item " .. tostring(weapon) .. " of index " .. tostring(data.index) .. " readiness: " .. tostring(a)  .. "/" .. tostring(b))
+--BLT.AssetManager:CreateEntry(Idstring(path),texture_ids,asset_path)
+	end
+	
+
+
+--]]

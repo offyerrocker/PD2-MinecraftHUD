@@ -3,14 +3,14 @@ local debug_rect_visible = false
 Hooks:Register("MinecraftHUDOnTeammateInit")
 
 Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teammates_panel, is_player, width)
-	if not self._main_player then return end
+	if not is_player then return end
 	
 --get some useful minecrafthud "tweakdata" values
 	local mctd = MinecraftHUD._hud_data
 	local texture_data = MinecraftHUD._textures
 	local font_data = MinecraftHUD._fonts
 	local scale = 1
-	if self._main_player then
+	if is_player then
 		scale = scale * MinecraftHUD:GetPlayerScale()
 	else
 		scale = scale * MinecraftHUD:GetTeammateScale()
@@ -21,7 +21,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 	local HOTBAR_SLOTS = mctd.hotbar_slots
 	local get_icon = MinecraftHUD.get_atlas_icon
 	local DEFAULT_SIZE = 36
-	local level_font_size = 64
+	local level_font_size = 48
 	local hotbar_counter_font_size = 32
 	local hotbar_offhand_x_offset = 128
 --main mchud panel for any given criminal
@@ -42,7 +42,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 --subpanel creation
 	local hotbar_panel = teammate_panel:panel({
 		name = "hotbar_panel",
-		visible = self._main_player,
+		visible = is_player,
 		h = 100
 	})
 	hotbar_panel:set_bottom(teammate_panel:h())
@@ -61,7 +61,8 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 	})
 	hotbar_bg:set_x((hotbar_panel:w() - hotbar_bg:w()) / 2)
 	hotbar_bg:set_y(hotbar_panel:h() - (hotbar_bg:h() + hotbar_bottom_margin))
-	--todo populate hotbar
+	--hotbar should be populated later
+	
 	local item_w = 72 * scale
 	local item_h = 72 * scale
 	local item_h_margin = 8
@@ -366,3 +367,5 @@ Hooks:PostHook(HUDTeammate,"set_ammo_amount_by_type","mchud_teammate_setammo",fu
 		MinecraftHUD:SetHotbarIcon(index,nil,nil,current_clip,current_reserve,nil,nil)
 	end
 end)
+
+
