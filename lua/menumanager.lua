@@ -1,4 +1,6 @@
 --[[
+	unload unused weapon icon assets to prevent fuckups like the one i just spent 12 hours on
+	
 	revert to old vitals tick settings to create bgs? 
 	this would allow color changing without interference from set_health
 	yeah probably that's the way
@@ -28,14 +30,17 @@
 		- health/armor aligned left of level text, on top of xp bar
 		- hunger aligned right of level text, on top of xp bar
 		- item bar:
+			0 (offhand). underbarrel
 			1. weapon1
-			2. throwable count
-			3. deployable1
-			4. deployable2
-			5. cableties
-			6. bodybags
-			7. lootbag
-			- offhand weapon2
+			2. weapon2
+			3. throwable count
+			4. deployable1
+			5. deployable2
+			6. cableties
+			7. bodybags
+			8. lootbag
+			
+			- offhand weapon?
 		- minecraft crit meter is throwable cooldown meter
 		- inventory keybind? or tabscreen:
 			- mission equipments
@@ -115,10 +120,11 @@ MinecraftHUD._textures = {
 	hotbar_selection = {
 		--none yet
 	},
-	bow_icon = {
-		--none yet
-	},
 	--]]
+	bow_icon = {
+		path = "guis/textures/mchud/hud/bow_standby",
+		extension = "png"
+	},
 	xp_empty = {
 		path = "guis/textures/mchud/hud/minecraft_xp_empty",
 		extension = "texture"
@@ -193,7 +199,7 @@ end
 
 MinecraftHUD.settings = MinecraftHUD.settings or {}
 MinecraftHUD.default_settings = MinecraftHUD.default_settings or {
-	enabled = true,
+	real_ammo_display = true,
 	player_hud_scale = 1,
 	team_hud_scale = 0.5,
 	player_vitals_display_mode = 1, --1: faithful, 2: helpful
@@ -223,16 +229,16 @@ function MinecraftHUD:log(a,...)
 	end
 end
 
+
+
+------------------------------settings getters
+
 function MinecraftHUD:GetPlayerScale()
 	return self.settings.player_hud_scale
 end
 
 function MinecraftHUD:GetTeammateScale()
 	return self.settings.teammate_hud_scale
-end
-
-function MinecraftHUD:IsEnabled() --not used
-	return self.settings.enabled
 end
 
 function MinecraftHUD:GetPlayerVitalsDisplayMode()
@@ -243,14 +249,27 @@ function MinecraftHUD:GetTeamVitalsDisplayMode()
 	return self.settings.team_vitals_display_mode
 end
 
+function MinecraftHUD:IsRealAmmoDisplayEnabled()
+	return self.settings.real_ammo_display
+end
+------------------------------/settings getters
+
 
 -------------------------------visual HUD setters
 function MinecraftHUD:SetExperienceProgress(percent)
-	do return end
 	local scale = self:GetPlayerScale()
 	local w,h = unpack(self._textures.xp_full.size)
-	xp_bar_full:set_w(percent * w * scale)
-	xp_bar_full:set_texture_rect(0,0,percent * w,h)
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+		local xp_bar_full = panel:child("xp_panel"):child("xp_full")
+		xp_bar_full:set_w(percent * w * scale)
+		xp_bar_full:set_texture_rect(0,0,percent * w,h)
+	end
 	
 end
 
@@ -266,10 +285,21 @@ function MinecraftHUD:SetExperiencePotential(xp)
 	local percent = math.min((current_amount + xp) / total_amount_to_next_level,1)
 	
 	do return end
+	
 	local scale = self:GetPlayerScale()
 	local w,h = unpack(self._textures.xp_full.size)
-	xp_bar_potential:set_w(percent * w * scale)
-	xp_bar_potential:set_texture_rect(0,0,percent * w,h)
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+		local xp_bar_potential = panel:child("xp_panel"):child("xp_bar_potential")
+		xp_bar_potential:set_w(percent * w * scale)
+		xp_bar_potential:set_texture_rect(0,0,percent * w,h)
+	end
+	
 end
 
 function MinecraftHUD:SetPlayerLevel(i,lvl)
@@ -419,6 +449,7 @@ function MinecraftHUD:SetHealthTicks(i,num)
 end
 
 function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
+	--self:log(tostring(i) .. " " .. tostring(icon) .. " " .. tostring(source) .. " " .. tostring(count1) .. " " .. tostring(count2) .. " " .. tostring(bar_progress))
 	local panel_data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
 	local teammate_panel = panel_data.panel
 	local hotbar_panel = teammate_panel:child("hotbar_panel")
@@ -430,15 +461,18 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 	end
 	local done_any = count1 or count2 or bar_progress
 	if alive(item) then 
+	
+	--text labels
 		local counter_bottom = item:child("counter_bottom")
 		local counter_top = item:child("counter_top")
 		if count1 then 
-			counter_bottom:set_text(tostring(count1))
+			counter_top:set_text(tostring(count1))
 		end
 		if count2 then 
-			counter_top:set_text(tostring(count2))
+			counter_bottom:set_text(tostring(count2))
 		end
 		
+	--durability bar
 		local durability_meter = item:child("durability_meter")
 		local durability_meter_bg = item:child("durability_meter_bg")
 		if bar_progress then 
@@ -468,7 +502,8 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 			durability_meter:hide()
 			durability_meter_bg:hide()
 		end
-		
+	
+	--icon
 		local bitmap = item:child("bitmap")
 		if icon then
 			local texture,texture_rect
@@ -476,12 +511,20 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 				if self._weapon_icons[icon] then 
 					texture = self._weapon_icons[icon].path
 				else
-					self:log("ERROR: No weapon icon found by name " .. tostring(icon))
-					return
+--					self:log("ERROR: No weapon icon found by name " .. tostring(icon))
+--					return
+
+					texture = self._textures.bow_icon.path
+					texture_rect = self._textures.bow_icon.texture_rect
 				end
 			elseif source == "atlas" then 
 				texture = self._textures.atlas.path
 				texture_rect = self.get_atlas_icon(icon)
+			elseif source == "texture" then
+				if self._textures[icon] then 
+					texture = self._textures[icon].path
+					texture_rect = self._textures[icon].texture_rect
+				end
 			end
 			
 			if texture then 
@@ -493,7 +536,7 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 		elseif icon == false then
 			bitmap:hide()
 		end
-		item:set_visible(done_any)
+		item:set_visible(done_any and true or false)
 	else
 		self:log("ERROR: Invalid hotbar index " .. tostring(i))
 	end
@@ -505,27 +548,62 @@ local panel = MinecraftHUD._cache.teammate_panels[4].panel:child("vitals_panel")
 adf = panel:animate(MinecraftHUD._animate_health_bar_wiggle,10,20,64,panel:h() - 36)
 return adf
 
-local weapons = {"aa12","legacy","g3","huntsman","hk21","gre_m79","galil","galil","deagle","czech"}
+local weapons = {"new_raging_bull","s552","ppk","g3","huntsman","hk21","gre_m79","galil","deagle"}
 for i,weapon in ipairs(weapons) do 
 	MinecraftHUD:LoadWeaponIcon(weapon)
-	
 	MinecraftHUD:SetHotbarIcon(i,weapon,"weapon",math.random(100),math.random(50),nil)
 end
+	MinecraftHUD:SetHotbarIcon(1,"msr","weapon",math.random(100),math.random(50),nil)
 
+	MinecraftHUD:SetHotbarIcon(2, "s552", "weapon", nil, nil, nil, false)
  MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("counter_bottom"):set_font_size(64)
 return MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):visible()
 MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):set_size(72,72)
-local panel = MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):set_image(MinecraftHUD._weapon_icons.ppk.path)
 
-local panel = MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):set_image(MinecraftHUD.get_atlas_icon("hunger_empty_black"))
+MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._weapon_icons.msr.path)
+MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._weapon_icons.ppk.path)
+
+MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._textures.bow_icon.path)
+
+MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1"):child("bitmap"):set_image(MinecraftHUD.get_atlas_icon("hunger_empty_black"))
+
+MinecraftHUD:SetHotbarIcon(1,"bow_standby","texture",0,0,false)
+
 
 for i = 3, 9,1 do 
 	MinecraftHUD:SetHotbarIcon(i,false,nil,"","",false)
 end
 MinecraftHUD:SetHotbarIcon(2,"aa12","weapon",12,40,false)
-MinecraftHUD:SetHotbarIcon(1,"ppk","weapon","",456,0.2)
+MinecraftHUD:SetHotbarIcon(1,"p226","weapon","",456,0.2)
 
-DB:has(Idstring("texture"),MinecraftHUD._weapon_icons.ppk.path)
+
+
+managers.dyn_resource:load(Idstring("texture"), Idstring(MinecraftHUD._weapon_icons.p226.path), DynamicResourceManager.DYN_RESOURCES_PACKAGE)
+managers.dyn_resource:load(Idstring("texture"), Idstring(MinecraftHUD._weapon_icons.msr.path), DynamicResourceManager.DYN_RESOURCES_PACKAGE)
+
+
+
+
+
+
+
+
+
+
+MinecraftHUD:SetHotbarIcon(3,"ak5","weapon")
+	
+	local dyn_pkg = DynamicResourceManager.DYN_RESOURCES_PACKAGE
+	local tids = Idstring("texture")
+	for weapon,data in pairs(MinecraftHUD._weapon_icons) do 
+		local a = DB:has(tids,data.path)
+		local b = managers.dyn_resource:is_resource_ready(tids,Idstring(data.path),dyn_pkg)
+		
+		log("Item " .. tostring(weapon) .. " of index " .. tostring(data.index) .. " readiness: " .. tostring(a)  .. "/" .. tostring(b))
+--BLT.AssetManager:CreateEntry(Idstring(path),texture_ids,asset_path)
+	end
+	
+
+
 --]]
 -------------------------------HUD animations
 function MinecraftHUD._animate_health_bar_wiggle(vitals_panel,ticks,speed,vertical_amount,y_orig)
@@ -673,17 +751,19 @@ function MinecraftHUD:LoadWeaponIcon(id,index)
 		local path = icon_data.path
 		local asset_path = icon_data.asset_path
 		local texture_ids = Idstring("texture")
-		if DB:has(texture_ids, path) then 
+--		if DB:has(texture_ids, path) and false then 
 			--do nothing; icon is already loaded
-		else
-			self:log("Loaded weapon icon [" .. tostring(id) .. "]")
+--		else
+			self:log("Loaded weapon icon [" .. tostring(id) .. "] from asset path " .. tostring(asset_path))
 			BLT.AssetManager:CreateEntry(Idstring(path),texture_ids,asset_path)
 			
-			managers.dyn_resource:load(texture_ids, Idstring(path), DynamicResourceManager.DYN_RESOURCES_PACKAGE, function() log("Done loading asset " .. tostring(id) .. " " .. tostring(index)) end)
+			managers.dyn_resource:load(texture_ids, Idstring(path), DynamicResourceManager.DYN_RESOURCES_PACKAGE, function(a) log("Done loading asset " .. tostring(id) .. " " .. tostring(index) .. " " .. tostring(a)) end)
 			
-		end
+--		end
+		return true
 	else
 		self:log("ERROR: No weapon icon found by id [" .. tostring(id) .. "]!")
+		return false
 	end
 end
 
@@ -724,8 +804,8 @@ end
 
 Hooks:Add( "MenuManagerInitialize", "mchud_init_menumanager", function(menu_manager)
 
-	MenuCallbackHandler.callback_mchud_set_enabled = function(self,item)
-		MinecraftHUD.settings.enabled = item:value() == "on"
+	MenuCallbackHandler.callback_mchud_set_realammo = function(self,item)
+		MinecraftHUD.settings.real_ammo_display = item:value() == "on"
 		MinecraftHUD:SaveSettings()
 	end
 	
@@ -749,7 +829,7 @@ MinecraftHUD:LoadSettings()
 --register weapon icons, to be loaded later
 local get_files = SystemFS and callback(SystemFS,SystemFS,"list") or file and callback(file,file,"GetFiles")
 if get_files then 
-	local texture_ids = Idstring("texture")
+--	local texture_ids = Idstring("texture")
 	local assets_path = MinecraftHUD._assets_path
 	local icons_path = MinecraftHUD._weapon_icons_path
 	
@@ -767,21 +847,32 @@ if get_files then
 		return string.sub(s,1,j-1),string.sub(s,j+1)
 	end
 	
-	for _,raw_filename in pairs(get_files(assets_path .. icons_path)) do
+	local ext_whitelist = {
+		png = true,
+		texture = true
+	}
+	local function is_extension_allowed(ext)
+		return ext and ext_whitelist[string.lower(ext)]
+	end
+	
+	for i,raw_filename in ipairs(get_files(assets_path .. icons_path)) do
 		local filename,extension = separate_extension(raw_filename)
-		if not (filename and extension) then 
-			MinecraftHUD:log("ERROR: bad filename when registering custom weapon icons: " .. tostring(raw_filename))
-			return
+		if is_extension_allowed(extension) then 
+			if not (filename and extension) then 
+				MinecraftHUD:log("ERROR: bad filename when registering custom weapon icons: " .. tostring(raw_filename))
+				return
+			end
+	--		MinecraftHUD:log("Registering custom weapon icon for weapon with id: [" .. filename .. "]")
+			
+			local path = icons_path .. filename
+			MinecraftHUD._weapon_icons[filename] = {
+				id = filename, --not used but just in case
+				index = i,
+				path = path,
+				asset_path = assets_path .. path .. "." .. extension,
+				extension = extension
+			}
 		end
---		MinecraftHUD:log("Registering custom weapon icon for weapon with id: [" .. filename .. "]")
-		
-		local path = icons_path .. filename
-		MinecraftHUD._weapon_icons[filename] = {
-			id = filename, --not used but just in case
-			path = path,
-			asset_path = assets_path .. path .. "." .. extension,
-			extension = extension
-		}
 	end
 	
 	--unload all here? not sure if textures are unloaded from memory between states

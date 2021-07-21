@@ -1,6 +1,8 @@
 {
 	"menu_minecrafthud" : "MinecraftHUD",
-	"menu_minecrafthud_desc" : "The best 16-bit HUD around",
+	"menu_minecrafthud_desc" : "The best 16-bit styled HUD around",
+	"mchud_set_realammo_title" : "Real Ammo Display",
+	"mchud_set_realammo_desc" : "If false, includes magazine count into total ammo counter.",
 	"mchud_set_player_hud_scale_title" : "Set Player HUD Scale",
 	"mchud_set_player_hud_scale_desc" : "Set the size multiplier for your HUD",
 	"mchud_set_team_hud_scale_title" : "Set Team HUD Scale",

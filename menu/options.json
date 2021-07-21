@@ -5,6 +5,14 @@
 	"back_callback" : "callback_mchud_menu_close",
 	"items" : [
 		{
+			"type" : "toggle",
+			"id" : "id_mchud_set_realammo",
+			"title" : "mchud_set_realammo_title",
+			"description" : "mchud_set_realammo_desc",
+			"callback" : "callback_mchud_set_realammo",
+			"value" : "real_ammo_display"
+		},
+		{
 			"type" : "slider",
 			"id" : "id_mchud_set_player_hud_scale",
 			"title" : "mchud_set_player_hud_scale_title",

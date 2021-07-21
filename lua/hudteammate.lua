@@ -1,5 +1,7 @@
 local debug_rect_visible = false
 
+Hooks:Register("MinecraftHUDOnTeammateInit")
+
 Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teammates_panel, is_player, width)
 	if not self._main_player then return end
 	
@@ -174,7 +176,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 	local hotbar_offhand_bitmap = hotbar_offhand_panel:bitmap({
 		name = "bitmap",
 		texture = "",
-		visible = false
+		visible = false,
 		layer = 4
 	})
 	local hotbar_offhand_durability_meter = hotbar_offhand_panel:rect({
@@ -248,7 +250,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 
 	local level = xp_panel:text({
 		name = "level",
-		text = tostring(managers.experience and managers.experience:current_level() or "0"),
+		text = "",
 		color = MinecraftHUD._color_data.xp_counter,
 		font = font_data.minecraft,
 		font_size = level_font_size,
@@ -328,7 +330,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 	end
 	
 	
-	
+	Hooks:Call("MinecraftHUDOnTeammateInit",_i,teammate_panel)
 end)
 
 Hooks:PostHook(HUDTeammate,"set_health","mchud_teammate_sethealth",function(self,data)
@@ -340,5 +342,27 @@ Hooks:PostHook(HUDTeammate,"set_armor","mchud_teammate_setarmor",function(self,d
 end)
 
 Hooks:PostHook(HUDTeammate,"set_callsign","mchud_teammate_setcallsign",function(self,num)
-	MinecraftHUD:SetPlayerLevel(self._id,tostring(managers.experience and managers.experience:current_level() or "0"))
+	if managers.experience then 
+	
+		local points = managers.experience:next_level_data_points()
+		local current_points = managers.experience:next_level_data_current_points()
+		
+		MinecraftHUD:SetPlayerLevel(self._id,tostring(managers.experience:current_level()))
+		MinecraftHUD:SetExperienceProgress(current_points/points)
+	end
+end)
+
+Hooks:PostHook(HUDTeammate,"set_ammo_amount_by_type","mchud_teammate_setammo",function(self,slot, max_clip, current_clip, current_left, max, weapon_panel)
+	if self._main_player then 
+--		log(slot, max_clip, current_clip, current_left, max)
+		local current_reserve = current_left
+		local index = 1
+		if slot == "primary" then
+			index = 2
+		end
+		if MinecraftHUD:IsRealAmmoDisplayEnabled() then 
+			current_reserve = math.max(current_left - current_clip,0)
+		end
+		MinecraftHUD:SetHotbarIcon(index,nil,nil,current_clip,current_reserve,nil,nil)
+	end
 end)
