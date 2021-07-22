@@ -2,6 +2,7 @@ local debug_rect_visible = false
 
 Hooks:Register("MinecraftHUDOnTeammateInit")
 
+--creation
 Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teammates_panel, is_player, width)
 	if not is_player then return end
 	
@@ -24,12 +25,21 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 	local level_font_size = 48
 	local hotbar_counter_font_size = 32
 	local hotbar_offhand_x_offset = 128
+	local nametag_font_size = 48
 --main mchud panel for any given criminal
 	local teammate_panel = managers.hud._saferect:panel():panel({
 		name = "mchud_" .. tostring(_i)
 	})
 	teammate_panel:rect({name="debug",color=Color.red,alpha=0.1,visible=debug_rect_visible})
-	MinecraftHUD._cache.teammate_panels[_i] = { panel = teammate_panel }
+	MinecraftHUD._cache.teammate_panels[_i] = new_panel_data
+	local new_panel_data = {
+		panel = teammate_panel,
+		tick_data = {
+			health = {},
+			armor = {},
+			hunger = {}
+		}
+	}
 
 --set some useful alignment variables
 	local hotbar_bottom_margin = 0 --space between hotbar bottom and screen bottom edge
@@ -260,6 +270,18 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 --		vertical = "bottom",
 		y = xp_empty:y() - (level_font_size / 2)
 	})
+	
+	
+	local nametag = teammate_panel:text({
+		name = "nametag",
+		text = managers.network.account:username(),
+		color = Color.white,
+		font = font_data.minecraft,
+		font_size = nametag_font_size,
+		layer = 6,
+		align = "center",
+		y = xp_panel:y() - nametag_font_size
+	})
 
 
 	--health/armor/stamina etc
@@ -282,6 +304,10 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			y = health_y - (DEFAULT_SIZE * 2.1),
 			layer = 3
 		})
+		new_panel_data.tick_data.armor[i] = {
+			fill = "full",
+			variant = "normal"
+		}
 	end
 	for i = 1,HEALTH_TICKS do
 		vitals_panel:bitmap({
@@ -292,7 +318,18 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			h = DEFAULT_SIZE,
 			x = center_x - ((i + 1) * DEFAULT_SIZE),
 			y = health_y - (DEFAULT_SIZE),
-			layer = 3
+			layer = 5
+		})
+		vitals_panel:bitmap({
+			name = "health_tick_lost_" .. i,
+			texture = texture_data.atlas.path,
+			texture_rect = get_icon("health_heart_full"),
+			w = DEFAULT_SIZE,
+			h = DEFAULT_SIZE,
+			x = center_x - ((i + 1) * DEFAULT_SIZE),
+			y = health_y - (DEFAULT_SIZE),
+			layer = 4,
+			visible = false
 		})
 		vitals_panel:bitmap({
 			name = "health_tick_bg_" .. i,
@@ -302,8 +339,13 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			h = DEFAULT_SIZE,
 			x = center_x - ((i + 1) * DEFAULT_SIZE),
 			y = health_y - (DEFAULT_SIZE),
-			layer = 2
+			layer = 3
 		})
+		
+		new_panel_data.tick_data.health[i] = {
+			fill = "full",
+			variant = "normal"
+		}
 		--]]
 	end
 	
@@ -328,12 +370,45 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			y = health_y - (DEFAULT_SIZE),
 			layer = 2
 		})
+		new_panel_data.tick_data.hunger[i] = {
+			fill = "full",
+			variant = "normal"
+		}
 	end
 	
 	
 	Hooks:Call("MinecraftHUDOnTeammateInit",_i,teammate_panel)
 end)
 
+
+--basic peer information
+Hooks:PostHook(HUDTeammate,"set_name","mchud_teammate_setname",function(self,teammate_name)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_cheater","mchud_teammate_setcheater",function(self,state)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_callsign","mchud_teammate_setcallsign",function(self,color_id)
+	if managers.experience then 
+	
+		local points = managers.experience:next_level_data_points()
+		local current_points = managers.experience:next_level_data_current_points()
+		
+		MinecraftHUD:SetPlayerLevel(self._id,tostring(managers.experience:current_level()))
+		MinecraftHUD:SetExperienceProgress(current_points/points)
+		MinecraftHUD:SetPlayerColor(self._id,tweak_data.chat_colors[color_id])
+	end
+end)
+
+Hooks:PostHook(HUDTeammate,"set_ai","mchud_teammate_setai",function(self,is_ai)
+	
+end)
+
+
+
+--general setters
 Hooks:PostHook(HUDTeammate,"set_health","mchud_teammate_sethealth",function(self,data)
 	MinecraftHUD:SetHealth(self._id,data.current,data.total)
 end)
@@ -342,15 +417,24 @@ Hooks:PostHook(HUDTeammate,"set_armor","mchud_teammate_setarmor",function(self,d
 	MinecraftHUD:SetArmor(self._id,data.current,data.total)
 end)
 
-Hooks:PostHook(HUDTeammate,"set_callsign","mchud_teammate_setcallsign",function(self,num)
-	if managers.experience then 
-	
-		local points = managers.experience:next_level_data_points()
-		local current_points = managers.experience:next_level_data_current_points()
-		
-		MinecraftHUD:SetPlayerLevel(self._id,tostring(managers.experience:current_level()))
-		MinecraftHUD:SetExperienceProgress(current_points/points)
-	end
+--cable ties
+Hooks:PostHook(HUDTeammate,"set_cable_tie","mchud_teammate_setcabletie",function(self,data)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_cable_ties_amount","mchud_teammate_setcabletieamount",function(self,amount)
+
+end)
+
+
+
+--weapon info
+Hooks:PostHook(HUDTeammate,"set_weapon_selected","mchud_teammate_setweaponselected",function(self,id,hud_icon)
+	local is_secondary = id == 1
+end)
+
+Hooks:PostHook(HUDTeammate,"set_weapon_firemode","mchud_teammate_setweaponfiremode",function(self,id,firemode)
+	local is_secondary = id == 1
 end)
 
 Hooks:PostHook(HUDTeammate,"set_ammo_amount_by_type","mchud_teammate_setammo",function(self,slot, max_clip, current_clip, current_left, max, weapon_panel)
@@ -367,5 +451,117 @@ Hooks:PostHook(HUDTeammate,"set_ammo_amount_by_type","mchud_teammate_setammo",fu
 		MinecraftHUD:SetHotbarIcon(index,nil,nil,current_clip,current_reserve,nil,nil)
 	end
 end)
+
+--deployable info
+Hooks:PostHook(HUDTeammate,"set_deployable_equipment","mchud_teammate_setdeployable",function(self,data)
+	
+end)
+Hooks:PostHook(HUDTeammate,"set_deployable_equipment_from_string","mchud_teammate_setdeployablestring",function(self,data)
+	
+end)
+Hooks:PostHook(HUDTeammate,"set_deployable_equipment_amount","mchud_teammate_setdeployableamount",function(self,index,data)
+	
+end)
+Hooks:PostHook(HUDTeammate,"set_deployable_equipment_amount_from_string","mchud_teammate_setdeployableamountstring",function(self,index,data)
+	
+end)
+
+--grenades/ability info
+Hooks:PostHook(HUDTeammate,"set_grenades","mchud_teammate_setgrenades",function(self,data)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_grenades_amount","mchud_teammate_setgrenadesamount",function(self,data)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_ability_icon","mchud_teammate_setabilityicon",function(self,icon)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_grenade_cooldown","mchud_teammate_setgrenadecooldown",function(self,data)
+
+end)
+
+
+--perk deck mechanics
+Hooks:PostHook(HUDTeammate,"set_delayed_damage","mchud_teammate_setstoic",function(self,data)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_stored_health_max","mchud_teammate_setexpresmax",function(self,stored_health_ratio)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_stored_health","mchud_teammate_setexpres",function(self,stored_health_ratio)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_absorb_active","mchud_teammate_setdamageabsorption",function(self,absorb_amount)
+
+end)
+
+
+--mission equipment
+Hooks:PostHook(HUDTeammate,"add_special_equipment","mchud_teammate_addmissionequipment",function(self,data)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"remove_special_equipment","mchud_teammate_removemissionequipment",function(self,equipment)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"layout_special_equipments","mchud_teammate_layoutmissionequipment",function(self)
+
+end)
+
+Hooks:PostHook(HUDTeammate,"set_special_equipment_amount","mchud_teammate_setmissionequipmentamount",function(self,equipment_id,amount)
+
+end)
+
+--downed/swansong/tased
+Hooks:PostHook(HUDTeammate,"set_condition","mchud_teammate_setcondition",function(self,icon_data)
+
+end)
+
+--interaction (separate from hudinteraction)
+Hooks:PostHook(HUDTeammate,"teammate_progress","mchud_teammate_setprogress",function(self,enabled,tweak_data_id,timer,success)
+
+end)
+
+--timer (downed timer)
+Hooks:PostHook(HUDTeammate,"start_timer","mchud_teammate_starttimer",function(self)
+
+end)
+Hooks:PostHook(HUDTeammate,"set_pause_timer","mchud_teammate_setpausetimer",function(self)
+
+end)
+Hooks:PostHook(HUDTeammate,"stop_timer","mchud_teammate_stop_timer",function(self)
+	
+end)
+
+--animate hooks
+Hooks:PostHook(HUDTeammate,"_damage_taken","mchud_teammate_ondamagetaken",function(self)
+
+end)
+
+
+
+--???
+Hooks:PostHook(HUDTeammate,"set_info_meter","mchud_teammate_setinfometer",function(self,data)
+end)
+
+Hooks:PostHook(HUDTeammate,"set_custom_radial","mchud_teammate_setcustomradial",function(self,data)
+	
+end)
+
+--team only (normal lootbag hud info is set in hudtemp)
+Hooks:PostHook(HUDTeammate,"set_carry_info","mchud_teammate_setbag",function(self,carry_id,value)
+
+end)
+Hooks:PostHook(HUDTeammate,"remove_carry_info","mchud_teammate_removebag",function(self)
+
+end)
+
 
 

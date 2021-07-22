@@ -161,7 +161,7 @@ MinecraftHUD._hud_data = {
 		health_empty_red = {2,0},
 		health_heart_full = {3,0},
 		health_heart_half = {4,0},
-		health_transparent_full = {5,0},
+		health_transparent_full = {5,0}, --do not use; alpha should be managed by code. this should be replaced
 		health_transparent_half = {6,0},
 		armor_empty = {0,1},
 		armor_half = {1,1},
@@ -171,7 +171,7 @@ MinecraftHUD._hud_data = {
 		hunger_empty_red = {2,2},
 		hunger_heart_full = {3,2},
 		hunger_heart_half = {4,2},
-		hunger_transparent_full = {5,2},
+		hunger_transparent_full = {5,2}, --do not use; alpha should be managed by code. this should be replaced
 		hunger_transparent_half = {6,2}
 	},
 	durability_thresholds = {
@@ -198,6 +198,7 @@ MinecraftHUD.default_settings = MinecraftHUD.default_settings or {
 
 MinecraftHUD._cache = {
 	--store session-specific data
+	crosshair_panel = nil,
 	teammate_panels = {
 		--indexed 1-4, contains data in addition to hud panel, eg:
 		--[[
@@ -223,6 +224,15 @@ function MinecraftHUD.get_atlas_icon(name)
 		return {size * x, size * y, size, size}
 	end
 	return {0,0,size,size}
+end
+
+
+function MinecraftHUD.get_peer_id_by_panel_id(panel_id)
+	return 1
+end
+
+function MinecraftHUD.get_panel_id_by_peer_id(peer_id)
+	return 4
 end
 
 function MinecraftHUD:log(a,...)
@@ -260,6 +270,36 @@ end
 
 ------------------------------/settings getters
 -------------------------------visual HUD setters
+
+function MinecraftHUD:GetHeartDataByTickIndex(panel_id,tick_index,bar_type)
+	bar_type = bar_type or "health"
+	local data = self._cache.teammate_panels[panel_id]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local tick_data = data.tick_data
+	local bar_type = tick_data and tick_data[bar_type]
+	return bar_type and bar_type[tick_index]
+end
+
+--check and set appropriate heart container types for any given player/bar type
+function MinecraftHUD:CheckHeartTicks(i,bar_type)
+
+end
+
+
+function MinecraftHUD:SetPlayerColor(i,color)
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+		panel:child("nametag"):set_color(color)
+	end
+end
 
 function MinecraftHUD:SetExperienceProgress(percent)
 	local scale = self:GetPlayerScale()
@@ -548,30 +588,110 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 	end
 end
 
+function MinecraftHUD:AddPlayerMissionEquipment(equipment_id,amount)
+	
+end
+
+function MinecraftHUD:RemovePlayerMissionEquipment(equipment_id)
+
+end
+
+function MinecraftHUD:SetPlayerMisssionEquipmentAmount(equipment_id,amount)
+
+end
+
+function MinecraftHUD:AddTeammateMissionEquipment(equipment_id,amount)
+
+end
+
+function MinecraftHUD:RemoveTeammateMissionEquipment(equipment_id)
+
+end
+
+function MinecraftHUD:SetTeammateMissionEquipmentAmount(equipment_id,amount)
+
+end
+
+
 -------------------------------/visual HUD setters
 -------------------------------HUD animations
-function MinecraftHUD._animate_health_bar_wiggle(vitals_panel,ticks,speed,vertical_amount,y_orig)
+
+--regeneration wave effect
+function MinecraftHUD._animate_health_bar_wave(vitals_panel,ticks,speed,vertical_amount,y_orig)
 	ticks = ticks or MinecraftHUD._hud_data.health_ticks
 	speed = speed or 10
 	vertical_amount = vertical_amount or 36
 	y_orig = y_orig or 0
 	local t = 0
-	while abutd do 
+	while true do 
 		local dt = coroutine.yield()
 		t = t + dt
-		for i = ticks,1,-1 do 
+		for i = 1,ticks,1 do 
 			local tick = vitals_panel:child("health_tick_" .. tostring(i))
 			if alive(tick) then 
 				local tick_bg = vitals_panel:child("health_tick_bg_" .. tostring(i))
-				local y_offset = y_orig + (vertical_amount * math.round(math.sin((speed * t) + (60 * i))) )
+				local y_offset = y_orig + (vertical_amount * math.round(math.sin((speed * t * 360) + (60 * i))) )
 				tick:set_y(y_offset)
 				tick_bg:set_y(y_offset)
 			else
---				break
+				break
 			end
 		end
 	end
 end
+
+--on damage flash (outline color + transparent heart)
+function MinecraftHUD._animate_health_bar_flash(panel_index,ticks,speed,duration)
+	ticks = ticks or MinecraftHUD._hud_data.health_ticks
+	speed = speed or 10
+	local panel_data = MinecraftHUD._cache.teammate_panels[panel_index]
+	local panel = panel_data and panel_data.panel
+	local vitals_panel = panel:child("vitals_panel")
+	local t = 0
+	while t < duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		
+		for i = 1,ticks,-1 do 
+			local tick = vitals_panel:child("health_tick_" .. tostring(i))
+			if alive(tick) then 
+				local tick_bg = vitals_panel:child("health_tick_bg_" .. tostring(i))
+				
+				local bg_atlas_sub = "health_empty_red"
+
+				local atlas_sub = "health_heart_full"
+
+				local tick_data = MinecraftHUD:GetHeartDataByTickIndex(panel_index,i,"health")
+				if tick_data then 
+					if tick_data.fill == "half" then
+						full = false
+					end
+				end
+				
+				local s = math.sin(speed * t * 360)
+				if s > 0 then
+					bg_atlas_sub = "health_empty_black"
+					tick:show()
+				else
+					tick:hide()
+				end
+				
+				local texture_rect = MinecraftHUD.get_atlas_icon(bg_atlas_sub)
+				tick_bg:set_texture_rect(texture_rect)
+				
+			else
+				break
+			end
+		end
+	end
+
+end
+
+--low health wiggle
+function MinecraftHUD._animate_health_bar_wiggle(vitals_panel,ticks,speed,vertical_amount,y_orig)
+
+end
+
 function MinecraftHUD._animate_armor_bar_wiggle(vitals_panel,speed,vertical_amount)
 
 end
@@ -823,8 +943,9 @@ else
 end
 
 MinecraftHUD:CheckResourcesAdded()
-MinecraftHUD:CheckResourcesReady()
---Hooks:Add("BaseNetworkSessionOnLoadComplete","mchud_basenetworkload",function() end)
+Hooks:Add("BaseNetworkSessionOnLoadComplete","mchud_basenetworkload",function() 
+	MinecraftHUD:CheckResourcesReady()
+end)
 
 -------------------------------/initialization
 
@@ -834,7 +955,6 @@ MinecraftHUD:CheckResourcesReady()
 
 
 
-abutd=true
 --[[
 
 
