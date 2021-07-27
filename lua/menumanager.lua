@@ -74,11 +74,10 @@
 
 
 > assets todo:
-	* non-outlined minecraft font
-	* hotbar selection square
+	* better non-outlined, shadowed font
 	* minecraft bow icon (default weapon)
 		- draw "animation" on hotbar when adsing?
-
+		
 > how am i going to make the character in the inventory screen
 
 --]]
@@ -93,6 +92,9 @@ MinecraftHUD._default_localization_file = MinecraftHUD._default_localization_pat
 
 
 MinecraftHUD._color_data = {
+	text_white = Color("ffffff"),
+	text_shadow = Color("3e3e3e"),
+	level_text = Color("7efc20"),
 	xp_counter = Color("B7FD98"),
 	xp_bar_potential = Color("888800"),
 	durability_bg = Color("000000"),
@@ -103,27 +105,31 @@ MinecraftHUD._color_data = {
 }
 
 MinecraftHUD._fonts = {
-	minecraft = "fonts/minecraftia_outline",
+	minecraft = "fonts/minecraftia",
 	minecraft_outline = "fonts/minecraftia_outline"
 }
 
 MinecraftHUD._textures = {
-	atlas = {
-		path = "guis/textures/mchud/hud/minecraft_atlas",
+	icons_atlas = {
+		path = "guis/textures/mchud/hud/icons_atlas",
 		extension = "texture"
 	},
+	ui_atlas = {
+		path = "guis/textures/mchud/hud/ui_atlas",
+		extension = "texture"
+	},
+	bow_icon = {
+		path = "guis/textures/mchud/hud/bow_standby",
+		extension = "png"
+	}
+	--[[
+	,
 	hotbar = {
 		path = "guis/textures/mchud/hud/minecraft_hotbar",
 		extension = "texture"
 	},
-	--[[
 	hotbar_selection = {
 		--none yet
-	},
-	--]]
-	bow_icon = {
-		path = "guis/textures/mchud/hud/bow_standby",
-		extension = "png"
 	},
 	xp_empty = {
 		path = "guis/textures/mchud/hud/minecraft_xp_empty",
@@ -136,6 +142,7 @@ MinecraftHUD._textures = {
 			728, 20
 		}
 	}
+	--]]
 }
 MinecraftHUD._weapon_icons_path = "guis/textures/mchud/vanilla_guns/"
 MinecraftHUD._weapon_icons = {
@@ -156,23 +163,409 @@ MinecraftHUD._hud_data = {
 	hunger_ticks = 10,
 	hotbar_slots = 9,
 	atlas = {
-		health_empty_black = {0,0}, --x,y,(optional) size
-		health_empty_white = {1,0},
-		health_empty_red = {2,0},
-		health_heart_full = {3,0},
-		health_heart_half = {4,0},
-		health_transparent_full = {5,0}, --do not use; alpha should be managed by code. this should be replaced
-		health_transparent_half = {6,0},
-		armor_empty = {0,1},
-		armor_half = {1,1},
-		armor_full = {2,1},
-		hunger_empty_black = {0,2},
-		hunger_empty_white = {1,2},
-		hunger_empty_red = {2,2},
-		hunger_heart_full = {3,2},
-		hunger_heart_half = {4,2},
-		hunger_transparent_full = {5,2}, --do not use; alpha should be managed by code. this should be replaced
-		hunger_transparent_half = {6,2}
+		--icons
+		health_empty_black = {
+			xy = {0,0},
+			atlas = "icons"
+		},
+		health_empty_white  = {
+			xy = {1,0},
+			atlas = "icons"
+		},
+		health_empty_red  = {
+			xy = {2,0},
+			atlas = "icons"
+		},
+		health_empty_white_but_again  = {
+			xy = {3,0},
+			atlas = "icons"
+		},
+		health_heart_full  = {
+			xy = {4,0},
+			atlas = "icons"
+		},
+		health_heart_half  = {
+			xy = {5,0},
+			atlas = "icons"
+		},
+		health_transparent_full  = { --alpha should be handled by Lua; these should not be used
+			xy = {6,0},
+			atlas = "icons"
+		},
+		health_transparent_half  = {
+			xy = {7,0},
+			atlas = "icons"
+		},
+		health_poison_full  = {
+			xy = {8,0},
+			atlas = "icons"
+		},
+		health_poison_half  = {
+			xy = {9,0},
+			atlas = "icons"
+		},
+		health_transparent_poison_full  = {
+			xy = {10,0},
+			atlas = "icons"
+		},
+		health_transparent_poison_half  = {
+			xy = {11,0},
+			atlas = "icons"
+		},
+		health_wither_full  = {
+			xy = {12,0},
+			atlas = "icons"
+		},
+		health_wither_half  = {
+			xy = {13,0},
+			atlas = "icons"
+		},
+		health_transparent_wither_full  = {
+			xy = {14,0},
+			atlas = "icons"
+		},
+		health_transparent_wither_half  = {
+			xy = {15,0},
+			atlas = "icons"
+		},
+		health_goldenapple_full  = {
+			xy = {16,0},
+			atlas = "icons"
+		},
+		health_goldenapple_half  = {
+			xy = {17,0},
+			atlas = "icons"
+		},
+		health_frozen_full  = {
+			xy = {18,0},
+			atlas = "icons"
+		},
+		health_frozen_half  = {
+			xy = {19,0},
+			atlas = "icons"
+		},
+		health_hardcore_empty_black = {
+			xy = {0,1},
+			atlas = "icons"
+		},
+		health_hardcore_empty_white  = {
+			xy = {1,1},
+			atlas = "icons"
+		},
+		health_hardcore_empty_red  = {
+			xy = {2,1},
+			atlas = "icons"
+		},
+		health_hardcore_empty_white_but_again  = {
+			xy = {3,1},
+			atlas = "icons"
+		},
+		health_hardcore_heart_full  = {
+			xy = {4,1},
+			atlas = "icons"
+		},
+		health_hardcore_heart_half  = {
+			xy = {5,1},
+			atlas = "icons"
+		},
+		health_hardcore_transparent_full  = {
+			xy = {6,1},
+			atlas = "icons"
+		},
+		health_hardcore_transparent_half  = {
+			xy = {7,1},
+			atlas = "icons"
+		},
+		health_hardcore_poison_full  = {
+			xy = {8,1},
+			atlas = "icons"
+		},
+		health_hardcore_poison_half  = {
+			xy = {9,1},
+			atlas = "icons"
+		},
+		health_hardcore_transparent_poison_full  = {
+			xy = {10,1},
+			atlas = "icons"
+		},
+		health_hardcore_transparent_poison_half  = {
+			xy = {11,1},
+			atlas = "icons"
+		},
+		health_hardcore_wither_full  = {
+			xy = {12,1},
+			atlas = "icons"
+		},
+		health_hardcore_wither_half  = {
+			xy = {13,1},
+			atlas = "icons"
+		},
+		health_hardcore_transparent_wither_full  = {
+			xy = {14,1},
+			atlas = "icons"
+		},
+		health_hardcore_transparent_wither_half  = {
+			xy = {15,1},
+			atlas = "icons"
+		},
+		health_hardcore_goldenapple_full  = {
+			xy = {16,1},
+			atlas = "icons"
+		},
+		health_hardcore_goldenapple_half  = {
+			xy = {17,1},
+			atlas = "icons"
+		},
+		health_hardcore_frozen_full  = {
+			xy = {18,1},
+			atlas = "icons"
+		},
+		health_hardcore_frozen_half  = {
+			xy = {19,1},
+			atlas = "icons"
+		},
+		health_u_full  = {
+			xy = {4,2},
+			atlas = "icons"
+		},
+		health_u_half  = {
+			xy = {5,2},
+			atlas = "icons"
+		},
+		health_transparent_u_full  = {
+			xy = {6,2},
+			atlas = "icons"
+		},
+		health_transparent_u_half  = {
+			xy = {7,2},
+			atlas = "icons"
+		},
+		hunger_sample_full = {
+			xy = {9,2},
+			atlas = "icons"
+		},
+		breath_bubble = {
+			xy = {11,2},
+			atlas = "icons"
+		},
+		breath_pop = {
+			xy = {12,2},
+			atlas = "icons"
+		},
+		hunger_empty_black = {
+			xy = {0,3},
+			atlas = "icons"
+		},
+		hunger_empty_white = {
+			xy = {1,3},
+			atlas = "icons"
+		},
+		hunger_empty_red = {
+			xy = {2,3},
+			atlas = "icons"
+		},
+		hunger_empty_white_but_again = {
+			xy = {3,3},
+			atlas = "icons"
+		},
+		hunger_heart_full = {
+			xy = {4,3},
+			atlas = "icons"
+		},
+		hunger_heart_half = {
+			xy = {5,3},
+			atlas = "icons"
+		},
+		hunger_transparent_full = {
+			xy = {6,3},
+			atlas = "icons"
+		},
+		hunger_transparent_half = {
+			xy = {7,3},
+			atlas = "icons"
+		},
+		hunger_poison_full = {
+			xy = {8,3},
+			atlas = "icons"
+		},
+		hunger_poison_half = {
+			xy = {9,3},
+			atlas = "icons"
+		},
+		hunger_transparent_poison_full = {
+			xy = {10,3},
+			atlas = "icons"
+		},
+		hunger_transparent_poison_half = {
+			xy = {11,3},
+			atlas = "icons"
+		},
+		hunger_empty_orange = {
+			xy = {12,3},
+			atlas = "icons"
+		},
+		hunger_empty_green = {
+			xy = {13,3},
+			atlas = "icons"
+		},
+		armor_empty = {
+			xy = {0,4},
+			atlas = "icons"
+		},
+		armor_half = {
+			xy = {1,4},
+			atlas = "icons"
+		},
+		armor_full = {
+			xy = {2,4},
+			atlas = "icons"
+		},
+		armor_full_but_again = {
+			xy = {3,4},
+			atlas = "icons"
+		},
+		armor_blue_half = {
+			xy = {5,4},
+			atlas = "icons"
+		},
+		armor_blue_full = {
+			xy = {6,4},
+			atlas = "icons"
+		},
+		
+		--ui
+		xp_bar_empty = {
+			rect = {0,0,728,20},
+			atlas = "ui"
+		},
+		xp_bar_full = {
+			rect = {0,22,728,20},
+			atlas = "ui"
+		},
+		boss_bar_empty = {
+			rect = {0,44,728,20},
+			atlas = "ui"
+		},
+		boss_bar_full = {
+			rect = {0,66,728,20},
+			atlas = "ui"
+		},
+		jump_bar_empty = {
+			rect = {0,88,728,20},
+			atlas = "ui"
+		},
+		jump_bar_full = {
+			rect = {0,110,728,20},
+			atlas = "ui"
+		},
+		attack_indicator_hotbar_empty = {
+			rect = {0,132,72,72},
+			atlas = "ui"
+		},
+		attack_indicator_hotbar_full = {
+			rect = {74,132,72,72},
+			atlas = "ui"
+		},
+		attack_indicator_crosshair_empty = {
+			rect = {148,132,64,32},
+			atlas = "ui"
+		},
+		attack_indicator_crosshair_full = {
+			rect = {214,132,64,32},
+			atlas = "ui"
+		},
+		attack_indicator_crosshair_sweep = {
+			rect = {280,132,64,32},
+			atlas = "ui"
+		},
+		crosshair = {
+			rect = {346,132,36,36},
+			atlas = "ui"
+		},
+		hotbar = {
+			rect = {0,206,728,88},
+			atlas = "ui"
+		},
+		hotbar_selection = {
+			rect = {2,296,96,96},
+			atlas = "ui"
+		},
+		hotbar_offhand = {
+			rect = {102,300,88,88},
+			atlas = "ui"
+		},
+		connection_bar_color_1 = {
+			rect = {2,394-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_color_2 = {
+			rect = {2,428-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_color_3 = {
+			rect = {2,462-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_color_4 = {
+			rect = {2,496-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_color_5 = {
+			rect = {2,530-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_color_6 = {
+			rect = {2,564-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_searching_1 = {
+			rect = {44,394-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_searching_2 = {
+			rect = {44,428-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_searching_3 = {
+			rect = {44,462-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_searching_4 = {
+			rect = {44,496-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_searching_5 = {
+			rect = {44,530-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_searching_6 = {
+			rect = {44,564-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_green_1 = {
+			rect = {86,394-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_green_2 = {
+			rect = {86,428-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_green_3 = {
+			rect = {86,462-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_green_4 = {
+			rect = {86,496-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_green_5 = {
+			rect = {86,530-0,40,32},
+			atlas = "ui"
+		},
+		connection_bar_green_6 = {
+			rect = {86,564-0,40,32},
+			atlas = "ui"
+		}
 	},
 	durability_thresholds = {
 		high = 1, --not used
@@ -190,6 +583,7 @@ MinecraftHUD._hud_data = {
 MinecraftHUD.settings = MinecraftHUD.settings or {}
 MinecraftHUD.default_settings = MinecraftHUD.default_settings or {
 	real_ammo_display = true,
+	tooltips_enabled = true,
 	player_hud_scale = 1,
 	team_hud_scale = 0.5,
 	player_vitals_display_mode = 1, --1: faithful, 2: helpful
@@ -217,6 +611,33 @@ MinecraftHUD._cache = {
 
 
 function MinecraftHUD.get_atlas_icon(name)
+	local item = (type(name) == "table" and name) or MinecraftHUD._hud_data.atlas[name]
+	if item then 
+		local padding = item.padding or 2
+		local texture = "guis/textures/mchud/hud/icons_atlas"
+		local rect
+		local atlas_name = item.atlas 
+		if item.path then 
+			texture = item.path
+		elseif atlas_name == "ui" then 
+			texture = "guis/textures/mchud/hud/ui_atlas"
+		elseif atlas_name == "icons" then 
+			texture = "guis/textures/mchud/hud/icons_atlas"
+		end
+		
+		if item.rect then 
+			rect = item.rect
+		elseif item.xy then 
+			local x,y = unpack(item.xy)
+			local size = item.size or MinecraftHUD._hud_data.size
+			rect = {padding + ((size + padding) * x),padding + ((size + padding) * y), size, size}
+		end
+		return texture,rect
+	end
+	return
+end
+
+function MinecraftHUD.old_get_atlas_icon(name)
 	local item = (type(name) == "table" and name) or MinecraftHUD._hud_data.atlas[name]
 	if item then 
 		local x,y,size = unpack(item)
@@ -268,6 +689,14 @@ function MinecraftHUD:IsRealAmmoDisplayEnabled()
 	return self.settings.real_ammo_display
 end
 
+function MinecraftHUD:IsTooltipEnabled()
+	return self.settings.tooltips_enabled
+end
+
+function MinecraftHUD:ShouldShowWeaponNickname()
+	return true
+end
+
 ------------------------------/settings getters
 -------------------------------visual HUD setters
 
@@ -303,7 +732,8 @@ end
 
 function MinecraftHUD:SetExperienceProgress(percent)
 	local scale = self:GetPlayerScale()
-	local w,h = unpack(self._textures.xp_full.size)
+	local w = MinecraftHUD._hud_data.atlas.xp_bar_full.rect[3]
+	local h = MinecraftHUD._hud_data.atlas.xp_bar_full.rect[4]
 	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
 	if not data then 
 --		self:log("ERROR: No teammate panel found: " .. tostring(i))
@@ -332,7 +762,8 @@ function MinecraftHUD:SetExperiencePotential(xp)
 	do return end
 	
 	local scale = self:GetPlayerScale()
-	local w,h = unpack(self._textures.xp_full.size)
+	local w = MinecraftHUD._hud_data.atlas.xp_bar_full.rect[3]
+	local h = MinecraftHUD._hud_data.atlas.xp_bar_full.rect[4]
 	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
 	if not data then 
 --		self:log("ERROR: No teammate panel found: " .. tostring(i))
@@ -379,19 +810,25 @@ function MinecraftHUD:SetHealth(i,current,total)
 	local panel = data.panel
 	local vitals_panel = panel:child("vitals_panel")
 	
+	
+	
+	local health_half_texture,health_half_texture_rect = get_icon("health_heart_half")
+	local health_full_texture,health_full_texture_rect = get_icon("health_heart_full")
+--	local health_empty_texture,health_empty_texture_rect = get_icon("health_empty_black")
+	
 	for i = HEALTH_TICKS,1,-1 do 
 		local tick = vitals_panel:child("health_tick_" .. i)
 		if alive(tick) then 
 			local tick_ratio = (i - 1) / HEALTH_TICKS 
 			if math.floor(tick_ratio * 10) >= math.floor(current_ratio * 10) then
 				if tick_ratio * 10 < math.round(current_ratio * 10) then 
-					tick:set_image(self._textures.atlas,unpack(get_icon("health_heart_half")))
+					tick:set_image(health_half_texture,unpack(health_half_texture_rect or {}))
 				else
-					tick:set_image(self._textures.atlas,unpack(get_icon("health_heart_full")))
+					tick:set_image(health_full_texture,unpack(health_full_texture_rect or {}))
 				end
 				tick:show()
 			else
---				tick:set_image(self._textures.atlas,unpack(get_icon("health_empty_black")))
+--				tick:set_image(health_empty_texture,unpack(health_empty_texture_rect or {}))
 				tick:hide()
 			end
 		else
@@ -418,18 +855,22 @@ function MinecraftHUD:SetArmor(i,current,total)
 	local panel = data.panel
 	local vitals_panel = panel:child("vitals_panel")
 	
+	local armor_half_texture,armor_half_texture_rect = get_icon("armor_half")
+	local armor_full_texture,armor_full_texture_rect = get_icon("armor_full")
+	local armor_empty_texture,armor_empty_texture_rect = get_icon("armor_empty")
+	
 	for i = ARMOR_TICKS,1,-1 do 
 		local tick = vitals_panel:child("armor_tick_" .. i)
 		if alive(tick) then 
 			local tick_ratio = (i - 1) / ARMOR_TICKS 
 			if math.floor(tick_ratio * 10) >= math.floor(current_ratio * 10) then
 				if tick_ratio * 10 < math.round(current_ratio * 10) then 
-					tick:set_image(self._textures.atlas,unpack(get_icon("armor_half")))
+					tick:set_image(armor_half_texture,unpack(armor_half_texture_rect or {}))
 				else
-					tick:set_image(self._textures.atlas,unpack(get_icon("armor_full")))
+					tick:set_image(armor_full_texture,unpack(armor_full_texture_rect or {}))
 				end
 			else
-				tick:set_image(self._textures.atlas,unpack(get_icon("armor_empty")))
+				tick:set_image(armor_empty_texture,unpack(armor_empty_texture_rect or {}))
 			end
 		else
 			break
@@ -496,11 +937,15 @@ end
 function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 	--self:log(tostring(i) .. " " .. tostring(icon) .. " " .. tostring(source) .. " " .. tostring(count1) .. " " .. tostring(count2) .. " " .. tostring(bar_progress))
 	local panel_data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not panel_data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
 	local teammate_panel = panel_data.panel
 	local hotbar_panel = teammate_panel:child("hotbar_panel")
 	local item 
 	if i == 0 then 
-		item = hotbar_panel:child("hotbar_offhand_bg")
+		item = hotbar_panel:child("hotbar_offhand_panel")
 	else
 		item = hotbar_panel:child("item_" .. tostring(i))
 	end
@@ -563,8 +1008,7 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 					texture_rect = self._textures.bow_icon.texture_rect
 				end
 			elseif source == "atlas" then 
-				texture = self._textures.atlas.path
-				texture_rect = self.get_atlas_icon(icon)
+				texture,texture_rect = self.get_atlas_icon(icon)
 			elseif source == "texture" then
 				if self._textures[icon] then 
 					texture = self._textures[icon].path
@@ -574,10 +1018,12 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 			
 			if texture then 
 				done_any = true
-				bitmap:set_image(texture,texture_rect and unpack(texture_rect))
+				bitmap:set_image(texture,unpack(texture_rect or {}))
 --				bitmap:set_size(item:size())
 --				bitmap:set_center(item:w() / 2,item:h() / 2)
 				bitmap:show()
+			elseif texture_rect then 
+--				bitmap:set_texture_rect(texture_rect)
 			end
 		elseif icon == false then
 			bitmap:hide()
@@ -585,6 +1031,31 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 		item:set_visible(done_any and true or false)
 	else
 		self:log("ERROR: Invalid hotbar index " .. tostring(i))
+	end
+end
+
+function MinecraftHUD:SetSelectedWeapon(slot)
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+		local hotbar_panel = panel:child("hotbar_panel")
+		local hotbar_selection_box = hotbar_panel:child("hotbar_selection_box")
+		local item
+		if slot == 0 then 
+			item = hotbar_panel:child("hotbar_offhand_panel")
+		else 
+			item = hotbar_panel:child("item_" .. tostring(slot))
+		end
+		if alive(item) then 
+			hotbar_selection_box:show()
+			hotbar_selection_box:set_center(item:center())
+		else
+			hotbar_selection_box:hide()
+		end
 	end
 end
 
@@ -612,6 +1083,34 @@ function MinecraftHUD:SetTeammateMissionEquipmentAmount(equipment_id,amount)
 
 end
 
+function MinecraftHUD:AnimateShowTooltip(s)
+
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+		local tooltip_text = panel:child("vitals_panel"):child("tooltip_text")
+		tooltip_text:set_alpha(1)
+		tooltip_text:stop()
+		tooltip_text:animate(self._animate_fadeout,2,1)
+	end
+	self:SetTooltipText(s)
+end
+
+function MinecraftHUD:SetTooltipText(s)
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+		panel:child("vitals_panel"):child("tooltip_text"):set_text(s)
+	end
+end
 
 -------------------------------/visual HUD setters
 -------------------------------HUD animations
@@ -698,6 +1197,26 @@ end
 function MinecraftHUD._animate_stamina_bar_wiggle(vitals_panel,speed,vertical_amount)
 
 end
+
+function MinecraftHUD._animate_fadeout(o,hold_duration,fadeout_duration)
+	local t = 0
+	hold_duration = hold_duration or 2
+	fadeout_duration = fadeout_duration or 0.5
+	local start_alpha = o:alpha()
+	while t <= hold_duration + fadeout_duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		
+		
+		local new_alpha = 1
+		if t < hold_duration then 
+			--nothing
+		else
+			local progress = (t - hold_duration) / fadeout_duration
+			o:set_alpha(start_alpha * (1 - (progress * progress)))
+		end
+	end
+end
 -------------------------------/animations
 
 
@@ -750,7 +1269,6 @@ function MinecraftHUD:CheckResourcesReady(skip_load,done_loading_cb)
 --	self:log("MinecraftHUD Checking font assets...")
 	local font_ids = Idstring("font")
 	local texture_ids = Idstring("texture")
-	
 	local dyn_pkg = DynamicResourceManager.DYN_RESOURCES_PACKAGE
 
 	if done_loading_cb then 
@@ -812,10 +1330,14 @@ function MinecraftHUD:LoadWeaponIcon(id,index)
 --		if DB:has(texture_ids, path) and false then 
 			--do nothing; icon is already loaded
 --		else
-			self:log("Loaded weapon icon [" .. tostring(id) .. "] from asset path " .. tostring(asset_path))
+--			self:log("Loaded weapon icon [" .. tostring(id) .. "] from asset path " .. tostring(asset_path))
 			BLT.AssetManager:CreateEntry(Idstring(path),texture_ids,asset_path)
 			
-			managers.dyn_resource:load(texture_ids, Idstring(path), DynamicResourceManager.DYN_RESOURCES_PACKAGE, function(a) log("Done loading asset " .. tostring(id) .. " " .. tostring(index) .. " " .. tostring(a)) end)
+			managers.dyn_resource:load(texture_ids, Idstring(path), DynamicResourceManager.DYN_RESOURCES_PACKAGE,
+				function(a)
+					--self:log("Done loading asset " .. tostring(id) .. " " .. tostring(index) .. " " .. tostring(a))
+				end
+			)
 			
 --		end
 		return true
@@ -943,9 +1465,9 @@ else
 end
 
 MinecraftHUD:CheckResourcesAdded()
-Hooks:Add("BaseNetworkSessionOnLoadComplete","mchud_basenetworkload",function() 
-	MinecraftHUD:CheckResourcesReady()
-end)
+--Hooks:Add("BaseNetworkSessionOnLoadComplete","mchud_basenetworkload",function() 
+--end)
+--MinecraftHUD:CheckResourcesReady()
 
 -------------------------------/initialization
 
@@ -985,7 +1507,7 @@ for i = 3, 9,1 do
 	MinecraftHUD:SetHotbarIcon(i,false,nil,"","",false)
 end
 MinecraftHUD:SetHotbarIcon(2,"aa12","weapon",12,40,false)
-MinecraftHUD:SetHotbarIcon(1,"p226","weapon","",456,0.2)
+MinecraftHUD:SetHotbarIcon(1,"p226","weapon","32","456",0.2)
 
 
 

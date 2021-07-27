@@ -24,6 +24,10 @@
 		{
 			"hook_id" : "lib/managers/hud/hudhitconfirm",
 			"script_path" : "lua/hudhitconfirm.lua"
+		},
+		{
+			"hook_id" : "lib/managers/dynamicresourcemanager",
+			"script_path" : "lua/dynamicresourcemanager.lua"
 		}
 	]
 }
