@@ -77,7 +77,7 @@
 	* better non-outlined, shadowed font
 	* minecraft bow icon (default weapon)
 		- draw "animation" on hotbar when adsing?
-		
+	* status effects interface in ui, for buffs panel later
 > how am i going to make the character in the inventory screen
 
 --]]
@@ -89,7 +89,6 @@ MinecraftHUD._data_path = MinecraftHUD._data_path or (MinecraftHUD._save_path ..
 MinecraftHUD._assets_path = MinecraftHUD._assets_path or (MinecraftHUD._path .. "assets/")
 MinecraftHUD._main_menu_path = MinecraftHUD._main_menu_path or (MinecraftHUD._path .. "menu/options.json")
 MinecraftHUD._default_localization_file = MinecraftHUD._default_localization_path or "english.json"
-
 
 MinecraftHUD._color_data = {
 	text_white = Color("ffffff"),
@@ -162,6 +161,14 @@ MinecraftHUD._hud_data = {
 	armor_ticks = 10,
 	hunger_ticks = 10,
 	hotbar_slots = 9,
+	SLOT_WEAPON_PRIMARY = 1,
+	SLOT_WEAPON_SECONDARY = 2,
+	SLOT_GRENADE = 3,
+	SLOT_DEPLOYABLE_PRIMARY = 4,
+	SLOT_DEPLOYABLE_SECONDARY = 5,
+	SLOT_CABLETIES = 6,
+	SLOT_BODYBAGS = 7,
+	SLOT_LOOTBAGS = 8,
 	atlas = {
 		--icons
 		health_empty_black = {
@@ -969,14 +976,15 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 			local hide_when_full = true
 			local bar_color
 			local durability_thresholds = self._hud_data.durability_thresholds
+			local color_data = self._color_data
 			if bar_progress >= durability_thresholds.medium then 
-				bar_color = self._color_data.durability_high
+				bar_color = color_data.durability_high
 			elseif bar_progress >= durability_thresholds.low then 
-				bar_color = self._color_data.durability_medium
+				bar_color = color_data.durability_medium
 			elseif bar_progress >= durability_thresholds.empty then 
-				bar_color = self._color_data.durability_low
+				bar_color = color_data.durability_low
 			else
-				bar_color = self._color_data.durability_empty
+				bar_color = color_data.durability_empty
 			end
 			
 			if bar_progress >= 1 and hide_when_full then 
@@ -1112,6 +1120,99 @@ function MinecraftHUD:SetTooltipText(s)
 	end
 end
 
+function MinecraftHUD:AnimateDurabilityBar(slot,from,to,duration)
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+	
+		local durability_thresholds = self._hud_data.durability_thresholds
+		local color_data = self._color_data
+		local hotbar_panel = panel:child("hotbar_panel")
+		local item
+		
+		if slot == 0 then 
+			item = hotbar_panel:child("hotbar_offhand_panel")
+		else 
+			item = hotbar_panel:child("item_" .. tostring(slot))
+		end
+		local durability_w = 64 * 0.9
+		if item then 
+			local function anim_func(o,_from,_to,_duration,w)
+			
+				local t = 0
+				local delta = _to - _from
+				while t < _duration do 
+					local dt = coroutine.yield()
+					t = t + dt
+					
+					if alive(o) then 
+						local bar_progress = _from + ((t / _duration) * delta)
+						local bar_color
+						if bar_progress >= 1 then 
+							o:hide()
+						else
+							o:show()
+							if bar_progress >= durability_thresholds.medium then 
+								bar_color = color_data.durability_high
+							elseif bar_progress >= durability_thresholds.low then 
+								bar_color = color_data.durability_medium
+							elseif bar_progress >= durability_thresholds.empty then 
+								bar_color = color_data.durability_low
+							else
+								bar_color = color_data.durability_empty
+							end
+						end
+						if bar_color then 
+							o:set_color(bar_color)
+						end
+						
+						o:set_w(w * bar_progress)
+					else
+						return
+					end
+				end
+			
+				
+			end
+			item:child("durability_meter"):animate(anim_func,from,to,duration,durability_w)
+			item:child("durability_meter"):show()
+			item:child("durability_meter_bg"):show()
+		end
+	end
+end
+
+function MinecraftHUD:SetCritBar(from,to,duration)
+	local crosshair_panel = self._cache.crosshair_panel
+	if alive(crosshair_panel) then 
+		local crit_indicator = crosshair_panel:child("crosshair_crit_indicator_full")
+		local crit_indicator_empty = crosshair_panel:child("crosshair_crit_indicator_full")
+		
+		crit_indicator:stop()
+		crit_indicator:show()
+		crit_indicator_empty:show()
+		local texture,texture_rect = self.get_atlas_icon("attack_indicator_crosshair_full")
+		if not from then 
+			local x,y,w,h = unpack(texture_rect)
+			crit_indicator:set_texture_rect(x,y,to * w,h)
+			crit_indicator:set_w(to * w)
+		else
+			local done_cb = function(o)
+				if alive(crit_indicator) then 
+					crit_indicator:hide()
+				end
+				if alive(crit_indicator_empty) then 
+					crit_indicator_empty:hide()
+				end
+			end
+			crit_indicator:animate(self._animate_progress_bar_w,duration,from,to,texture_rect,cb)
+		end
+	end
+end
+
 -------------------------------/visual HUD setters
 -------------------------------HUD animations
 
@@ -1217,6 +1318,49 @@ function MinecraftHUD._animate_fadeout(o,hold_duration,fadeout_duration)
 		end
 	end
 end
+
+function MinecraftHUD._animate_rect_bar_w(o,duration,from,to,w,cb)
+	local t = 0
+	local delta = to - from
+	while t < duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		
+		if alive(o) then 
+			local progress = from + ((t / duration) * delta)
+			o:set_w(w * progress)
+		else
+			return
+		end
+	end
+	if cb then 
+		cb(o)
+	end
+end
+
+function MinecraftHUD._animate_progress_bar_w(o,duration,from,to,x,y,w,h,cb)
+	local t = 0
+	local delta = to - from
+	if type(x) == "table" then 
+		x,y,w,h = unpack(x)
+	end
+	while t < duration do 
+		local dt = coroutine.yield()
+		t = t + dt
+		local progress = from + ((t / duration) * delta)
+		
+		if alive(o) then 
+			o:set_texture_rect(x,y,w * progress,h)
+			o:set_w(w * progress)
+		else
+			return
+		end
+	end
+	if cb then 
+		cb(o)
+	end
+end
+
 -------------------------------/animations
 
 
@@ -1465,9 +1609,6 @@ else
 end
 
 MinecraftHUD:CheckResourcesAdded()
---Hooks:Add("BaseNetworkSessionOnLoadComplete","mchud_basenetworkload",function() 
---end)
---MinecraftHUD:CheckResourcesReady()
 
 -------------------------------/initialization
 
@@ -1506,7 +1647,8 @@ MinecraftHUD:SetHotbarIcon(1,"bow_standby","texture",0,0,false)
 for i = 3, 9,1 do 
 	MinecraftHUD:SetHotbarIcon(i,false,nil,"","",false)
 end
-MinecraftHUD:SetHotbarIcon(2,"aa12","weapon",12,40,false)
+MinecraftHUD:LoadWeaponIcon("ppk")
+MinecraftHUD:SetHotbarIcon(3,"ppk","weapon",12,40,0.1)
 MinecraftHUD:SetHotbarIcon(1,"p226","weapon","32","456",0.2)
 
 
@@ -1560,6 +1702,5 @@ MinecraftHUD:SetHotbarIcon(3,"ak5","weapon")
 --BLT.AssetManager:CreateEntry(Idstring(path),texture_ids,asset_path)
 	end
 	
-
 
 --]]

@@ -165,11 +165,11 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 		w = 96,
 		h = 96,
 		x = hotbar_bg:x() - hotbar_offhand_x_offset,
---		y = hotbar_bg:y(),
+		y = hotbar_bg:y(),
 		layer = 2,
 		visible = true
 	})
-	hotbar_offhand_panel:set_y(hotbar_bg:y() + ((hotbar_bg:h() - hotbar_offhand_panel:h()) / 2))
+--	hotbar_offhand_panel:set_y(hotbar_bg:y() + ((hotbar_bg:h() - hotbar_offhand_panel:h()) / 2))
 	
 	local hotbar_offhand_counter_top = hotbar_offhand_panel:text({
 		name = "counter_top",
@@ -534,7 +534,32 @@ Hooks:PostHook(HUDTeammate,"set_ability_icon","mchud_teammate_setabilityicon",fu
 end)
 
 Hooks:PostHook(HUDTeammate,"set_grenade_cooldown","mchud_teammate_setgrenadecooldown",function(self,data)
+	if self._main_player then 
+		if data then 
+			local end_time = data.end_time
+			local duration = data.duration
+			
+	--		local t = managers.game_play_central:get_heist_timer()
+			
+	--		local progress = 1 - time_left / duration
+			
+			
+			--todo track progress in cache to set/get proper start/end
+			MinecraftHUD:AnimateDurabilityBar(MinecraftHUD._hud_data.SLOT_GRENADE,0,1,duration)
+		else
+			--set greyed out
+		end
+	end
+end)
 
+Hooks:PostHook(HUDTeammate,"set_ability_radial","mchud_teammate_setabilityradial",function(self,data)
+	
+end)
+
+Hooks:PostHook(HUDTeammate,"activate_ability_radial","mchud_teammate_activateabilityradial",function(self,time_left,time_total)
+	if self._main_player then 
+		MinecraftHUD:SetCritBar(1,0,time_left)
+	end
 end)
 
 
