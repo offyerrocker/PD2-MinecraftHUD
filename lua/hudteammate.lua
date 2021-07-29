@@ -440,8 +440,11 @@ Hooks:PostHook(HUDTeammate,"set_callsign","mchud_teammate_setcallsign",function(
 		local current_points = managers.experience:next_level_data_current_points()
 		
 		MinecraftHUD:SetPlayerLevel(self._id,tostring(managers.experience:current_level()))
-		MinecraftHUD:SetExperienceProgress(current_points/points)
 		MinecraftHUD:SetPlayerColor(self._id,tweak_data.chat_colors[color_id])
+		
+		if self._main_player then 
+			MinecraftHUD:SetExperienceProgress(current_points/points)
+		end
 	end
 end)
 

@@ -731,7 +731,7 @@ end
 
 
 function MinecraftHUD:SetPlayerColor(i,color)
-	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	local data = self._cache.teammate_panels[i]
 	if not data then 
 --		self:log("ERROR: No teammate panel found: " .. tostring(i))
 		return
@@ -890,8 +890,8 @@ function MinecraftHUD:SetArmor(i,current,total)
 	end
 end
 
-function MinecraftHUD:SetHunger(i,current,total)
-	local data = self._cache.teammate_panels[i]
+function MinecraftHUD:SetHunger(current,total)
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
 	if not data then 
 --		self:log("ERROR: No teammate panel found: " .. tostring(i))
 		return
@@ -906,22 +906,29 @@ function MinecraftHUD:SetHunger(i,current,total)
 		current_ratio = (current / total)
 	end
 	current_ratio = 1 - current_ratio
-	
 	local panel = data.panel
 	local vitals_panel = panel:child("vitals_panel")
 	
+	local hunger_half_texture,hunger_half_texture_rect = get_icon("hunger_heart_half")
+	local hunger_full_texture,hunger_full_texture_rect = get_icon("hunger_heart_full")
+	local hunger_empty_texture,hunger_empty_texture_rect = get_icon("hunger_empty_black")
+	
+	
 	for i = 1,HUNGER_TICKS do 
-		local tick = panel:child("hunger_tick_" .. i)
-		local r = (i - 1) / HUNGER_TICKS 
-		if math.round(r * 10) >= current_ratio * 10 then
-			tick:show()
-			tick:set_image(data.atlas_name,unpack(get_icon("hunger_heart_full")))			
-		elseif math.round(r * 10) >= math.floor(current_ratio * 10) then
---			tick:show()
-			tick:set_image(data.atlas_name,unpack(get_icon("hunger_heart_half")))
-		else
-			tick:set_image(data.atlas_name,unpack(get_icon("hunger_empty_black")))
---			tick:hide()
+		local tick = vitals_panel:child("hunger_tick_" .. i)
+		if alive(tick) then 
+			local tick_ratio = (i - 1) / HUNGER_TICKS 
+			if math.floor(tick_ratio * 10) >= math.floor(current_ratio * 10) then
+				if tick_ratio * 10 < math.round(current_ratio * 10) then 
+					tick:set_image(hunger_half_texture,unpack(hunger_half_texture_rect or {}))
+				else
+					tick:set_image(hunger_full_texture,unpack(hunger_full_texture_rect or {}))
+				end
+				tick:show()
+			else
+				tick:hide()
+--				tick:set_image(hunger_empty_texture,unpack(hunger_empty_texture_rect or {}))
+			end
 		end
 	end
 	
@@ -931,9 +938,9 @@ function MinecraftHUD:SetHealthTicks(i,num)
 	local data = self._cache.teammate_panels[i]
 	if data then 
 		data.health_ticks = num
-		if alive(data.panel) then 
+		if alive(data.panel) then
 			local vitals_panel = data.panel:child("vitals_panel")
-			for i = 1,self._hud_data.health_ticks do 
+			for i = 1,self._hud_data.health_ticks do
 				local tick = vitals_panel:child("health_fill_" .. tostring(i))
 				if alive(tick) then 
 					--health is created right to left
