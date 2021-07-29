@@ -1,4 +1,13 @@
 --[[
+	player:
+		underbarrel detection (local only)
+		tick bouncing animations
+		figure out a melee slot, swap selection box to it while melee is active
+		deployable selection box
+		
+		system for tracking and stopping specific animations by thread
+
+		
 	unload unused weapon icon assets to prevent fuckups like the one i just spent 12 hours on
 	
 	revert to old vitals tick settings to create bgs? 
@@ -9,7 +18,7 @@
 		- faithful: 10 hearts (20 half hearts) of health and armor both
 		- helpful: hearts x[amount]
 		
-	on gun loaded (hook to playerinventory):
+	on gun loaded:
 		use mc bow icon until asset loaded
 		- search for icon by gun id 
 			--TODO do mass lookup by all guns in weapontweakdata for existing icon
@@ -24,13 +33,8 @@
 
 > creation notes: 
 	player: 
-		- main panel has default alignment
-		- xp bar is aligned to bottom
-		- level/infamy text is aligned to center
-		- health/armor aligned left of level text, on top of xp bar
-		- hunger aligned right of level text, on top of xp bar
 		- item bar:
-			0 (offhand). underbarrel
+			0 (offhand). underbarrel? melee?
 			1. weapon1
 			2. weapon2
 			3. throwable count
@@ -39,6 +43,7 @@
 			6. cableties
 			7. bodybags
 			8. lootbag
+			9. pagers? melee?
 			
 			- offhand weapon?
 		- minecraft crit meter is throwable cooldown meter
@@ -66,9 +71,6 @@
 		- deployable(s)
 		- cableties
 		- lootbag
-	general:
-		- main menu overhaul?
-		- chat overhaul?
 
 
 
@@ -93,6 +95,9 @@ MinecraftHUD._default_localization_file = MinecraftHUD._default_localization_pat
 MinecraftHUD._color_data = {
 	text_white = Color("ffffff"),
 	text_shadow = Color("3e3e3e"),
+	tooltip_color_default = Color("ffffff"),
+	tooltip_color_nicknamed = Color("00ffff"),
+	tooltip_color_lootbag = Color("ffd700"),
 	level_text = Color("7efc20"),
 	xp_counter = Color("B7FD98"),
 	xp_bar_potential = Color("888800"),
@@ -964,9 +969,15 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 		local counter_top = item:child("counter_top")
 		if count1 then 
 			counter_top:set_text(tostring(count1))
+			counter_top:show()
+		elseif count1 == false then 
+			counter_top:hide()
 		end
 		if count2 then 
 			counter_bottom:set_text(tostring(count2))
+			counter_bottom:show()
+		elseif count2 == false then
+			counter_bottom:hide()
 		end
 		
 	--durability bar
@@ -1017,10 +1028,17 @@ function MinecraftHUD:SetHotbarIcon(i,icon,source,count1,count2,bar_progress)
 				end
 			elseif source == "atlas" then 
 				texture,texture_rect = self.get_atlas_icon(icon)
-			elseif source == "texture" then
+			elseif source == "mchud" then
 				if self._textures[icon] then 
 					texture = self._textures[icon].path
 					texture_rect = self._textures[icon].texture_rect
+				end
+			elseif source == "texture" then 
+				if type(icon) == "table" then 
+					texture = icon[1]
+					texture_rect = icon[2]
+				else
+					texture = icon
 				end
 			end
 			
@@ -1091,19 +1109,107 @@ function MinecraftHUD:SetTeammateMissionEquipmentAmount(equipment_id,amount)
 
 end
 
-function MinecraftHUD:AnimateShowTooltip(s)
+--local player only
+function MinecraftHUD:CheckDeployableEquipment(do_icon,do_amount1,do_amount2)
 
+	local pm = managers.player
+	local player = pm:local_player()
+	if alive(player) then 
+		for slot,equipment in ipairs(pm._equipment.selections) do 
+			local amounts = {
+				false,
+				false
+			}
+			for i,raw in ipairs(equipment.amount) do 
+				amounts[i] = Application:digest_value(raw,false)
+			end
+--				local equipment_id = equipment.equipment
+			local hotbar_slot = self._hud_data.SLOT_DEPLOYABLE_PRIMARY
+			if slot == 2 then 
+				hotbar_slot = self._hud_data.SLOT_DEPLOYABLE_SECONDARY
+			end
+			
+			local icon,source
+			if do_icon then 
+				icon = {tweak_data.hud_icons:get_icon_data(equipment.icon)}
+				source = "texture"
+			end
+			
+			self:SetHotbarIcon(hotbar_slot,
+				icon,
+				source,
+				do_amount2 and amounts[2] or nil,
+				do_amount1 and amounts[1] or nil,
+				nil
+			)
+		end
+	end
+end
+
+function MinecraftHUD:SetBodybagsAmount(amount)
+	self:SetHotbarIcon(self._hud_data.SLOT_BODYBAGS,
+		{tweak_data.hud_icons:get_icon_data("equipment_body_bag")},
+		"texture",
+		nil,
+		amount,
+		nil
+	)
+end
+
+function MinecraftHUD:SetPlayerCarry(carry_id,value,skip_tooltip)
+	local carry_data = tweak_data.carry[carry_id]
+	local name_id = carry_data.name_id and managers.localization:text(carry_data.name_id)
+--	local value_string = value and managers.experience:cash_string(value) or ""
+	
+	if not skip_tooltip then 
+		self:AnimateShowTooltip(name_id,MinecraftHUD._color_data.tooltip_color_lootbag)
+	end
+	
+	self:SetHotbarIcon(self._hud_data.SLOT_LOOTBAGS,
+		{
+			"guis/textures/pd2/hud_tabs",
+			{
+				32,
+				33,
+				32,
+				31
+			}
+		},
+		"texture",
+		nil,
+		nil,
+		nil
+	)
+end
+
+function MinecraftHUD:HidePlayerCarry()
+	self:SetHotbarIcon(self._hud_data.SLOT_LOOTBAGS,
+		false,
+		nil,
+		nil,
+		nil,
+		nil
+	)
+end
+
+function MinecraftHUD:AnimateShowTooltip(s,color)
 	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
 	if not data then 
 --		self:log("ERROR: No teammate panel found: " .. tostring(i))
 		return
 	end
 	local panel = data.panel
-	if alive(panel) then 
-		local tooltip_text = panel:child("vitals_panel"):child("tooltip_text")
-		tooltip_text:set_alpha(1)
-		tooltip_text:stop()
-		tooltip_text:animate(self._animate_fadeout,2,1)
+	if alive(panel) then
+		if s == "" then 
+			tooltip_text:stop()
+		else
+			color = color or self._color_data.tooltip_color_default
+			local tooltip_text = panel:child("vitals_panel"):child("tooltip_text")
+			tooltip_text:set_color(color)
+			tooltip_text:set_alpha(1)
+			tooltip_text:stop()
+			tooltip_text:animate(self._animate_fadeout,2,1)
+		end
 	end
 	self:SetTooltipText(s)
 end
@@ -1133,7 +1239,6 @@ function MinecraftHUD:AnimateDurabilityBar(slot,from,to,duration)
 		local color_data = self._color_data
 		local hotbar_panel = panel:child("hotbar_panel")
 		local item
-		
 		if slot == 0 then 
 			item = hotbar_panel:child("hotbar_offhand_panel")
 		else 
@@ -1141,20 +1246,29 @@ function MinecraftHUD:AnimateDurabilityBar(slot,from,to,duration)
 		end
 		local durability_w = 64 * 0.9
 		if item then 
-			local function anim_func(o,_from,_to,_duration,w)
+			local durability_meter_bg = item:child("durability_meter_bg")
+			local durability_meter = item:child("durability_meter")
 			
+			local function anim_func(o,_from,_to,_duration,w)
 				local t = 0
 				local delta = _to - _from
-				while t < _duration do 
+				repeat 
 					local dt = coroutine.yield()
 					t = t + dt
 					
 					if alive(o) then 
-						local bar_progress = _from + ((t / _duration) * delta)
+						local bar_progress = to
+					
+						if duration > 0 then 
+							bar_progress = _from + ((t / _duration) * delta)
+						end
+						
 						local bar_color
 						if bar_progress >= 1 then 
 							o:hide()
+							durability_meter_bg:hide()
 						else
+							durability_meter_bg:show()
 							o:show()
 							if bar_progress >= durability_thresholds.medium then 
 								bar_color = color_data.durability_high
@@ -1174,13 +1288,10 @@ function MinecraftHUD:AnimateDurabilityBar(slot,from,to,duration)
 					else
 						return
 					end
-				end
-			
-				
+				until t >= _duration
 			end
-			item:child("durability_meter"):animate(anim_func,from,to,duration,durability_w)
-			item:child("durability_meter"):show()
-			item:child("durability_meter_bg"):show()
+			durability_meter:stop()
+			durability_meter:animate(anim_func,from,to,duration,durability_w)
 		end
 	end
 end
@@ -1623,6 +1734,21 @@ MinecraftHUD:CheckResourcesAdded()
 
 
 
+function MinecraftHUD:SetSomething()
+	local data = self._cache.teammate_panels[HUDManager.PLAYER_PANEL]
+	if not data then 
+--		self:log("ERROR: No teammate panel found: " .. tostring(i))
+		return
+	end
+	local panel = data.panel
+	if alive(panel) then 
+		local hotbar_panel = panel:child("hotbar_panel")
+		
+	end
+
+end
+
+
 
 local panel = MinecraftHUD._cache.teammate_panels[4].panel:child("vitals_panel")
 panel:stop()
@@ -1641,14 +1767,14 @@ MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_1
 
 MinecraftHUD._cache.teammate_panels[4].panel:child("hotbar_panel"):child("item_4"):child("bitmap"):set_image(MinecraftHUD._weapon_icons.msr.path)
 
-MinecraftHUD:SetHotbarIcon(1,"bow_standby","texture",0,0,false)
+MinecraftHUD:SetHotbarIcon(1,"bow_standby","mchud",0,0,false)
 
 
 for i = 3, 9,1 do 
 	MinecraftHUD:SetHotbarIcon(i,false,nil,"","",false)
 end
 MinecraftHUD:LoadWeaponIcon("ppk")
-MinecraftHUD:SetHotbarIcon(3,"ppk","weapon",12,40,0.1)
+MinecraftHUD:SetHotbarIcon(3,"ppk","weapon",12,40,0.5)
 MinecraftHUD:SetHotbarIcon(1,"p226","weapon","32","456",0.2)
 
 

@@ -2,6 +2,11 @@ local debug_rect_visible = false
 
 Hooks:Register("MinecraftHUDOnTeammateInit")
 
+Hooks:Add("MinecraftHUDOnTeammateInit","mchud_setcabletiesicon",function(i,teammate_panel)
+	if i == HUDManager.PLAYER_PANEL then 
+
+	end
+end)
 --creation
 Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teammates_panel, is_player, width)
 	if not is_player then return end
@@ -457,11 +462,22 @@ end)
 
 --cable ties
 Hooks:PostHook(HUDTeammate,"set_cable_tie","mchud_teammate_setcabletie",function(self,data)
-
+	if data then 
+		if self._main_player then 
+			MinecraftHUD:SetHotbarIcon(MinecraftHUD._hud_data.SLOT_CABLETIES,{
+				tweak_data.hud_icons:get_icon_data(data.icon)
+			},"texture",nil,nil,nil)
+		end
+	end
 end)
 
 Hooks:PostHook(HUDTeammate,"set_cable_ties_amount","mchud_teammate_setcabletieamount",function(self,amount)
-
+	if amount == -1 then 
+		amount = 0
+	end
+	if self._main_player then 
+		MinecraftHUD:SetHotbarIcon(MinecraftHUD._hud_data.SLOT_CABLETIES,nil,nil,nil,amount,nil)
+	end
 end)
 
 
@@ -475,9 +491,8 @@ Hooks:PostHook(HUDTeammate,"set_weapon_selected","mchud_teammate_setweaponselect
 			local weapon_id = is_secondary and bm:equipped_secondary().weapon_id or bm:equipped_primary().weapon_id
 			local weapon_name = managers.weapon_factory:get_weapon_name_by_weapon_id(weapon_id)
 			local weapon_nickname = (is_secondary and bm:equipped_secondary() or bm:equipped_primary()).custom_name
-			
 			if weapon_nickname and MinecraftHUD:ShouldShowWeaponNickname() then 
-				MinecraftHUD:AnimateShowTooltip(weapon_nickname)
+				MinecraftHUD:AnimateShowTooltip(weapon_nickname,MinecraftHUD._color_data.tooltip_color_nicknamed)
 			else
 				MinecraftHUD:AnimateShowTooltip(weapon_name)
 			end
@@ -507,26 +522,53 @@ Hooks:PostHook(HUDTeammate,"set_ammo_amount_by_type","mchud_teammate_setammo",fu
 end)
 
 --deployable info
+	--the vanilla hud was not designed to show both deployables at once,
+	--so neither was this code,
+	--even though it has a slot parameter.
+	--anyway that's why it gives me trust issues
 Hooks:PostHook(HUDTeammate,"set_deployable_equipment","mchud_teammate_setdeployable",function(self,data)
-	
+	if self._main_player then 
+		MinecraftHUD:CheckDeployableEquipment(true,true,true)
+--		MinecraftHUD:CheckDeployableEquipment(self._id)
+	end
 end)
 Hooks:PostHook(HUDTeammate,"set_deployable_equipment_from_string","mchud_teammate_setdeployablestring",function(self,data)
-	
+	if self._main_player then 
+		MinecraftHUD:CheckDeployableEquipment(true,true,true)
+	end
 end)
 Hooks:PostHook(HUDTeammate,"set_deployable_equipment_amount","mchud_teammate_setdeployableamount",function(self,index,data)
-	
+	if self._main_player then 
+		MinecraftHUD:CheckDeployableEquipment(false,true,true)
+	end
 end)
 Hooks:PostHook(HUDTeammate,"set_deployable_equipment_amount_from_string","mchud_teammate_setdeployableamountstring",function(self,index,data)
-	
+	if self._main_player then 
+		MinecraftHUD:CheckDeployableEquipment(false,true,true)
+	end
 end)
 
 --grenades/ability info
 Hooks:PostHook(HUDTeammate,"set_grenades","mchud_teammate_setgrenades",function(self,data)
-
+	if data then 
+		if self._main_player then 
+			MinecraftHUD:SetHotbarIcon(MinecraftHUD._hud_data.SLOT_GRENADE,{tweak_data.hud_icons:get_icon_data(data.icon, {
+				0,
+				0,
+				32,
+				32
+			})},"texture",nil,nil,nil)
+		end
+	end
+	--set_grenades also calls set_grenades_amount so no need to do it here
 end)
 
 Hooks:PostHook(HUDTeammate,"set_grenades_amount","mchud_teammate_setgrenadesamount",function(self,data)
-
+	if data then 
+		if self._main_player then 
+			MinecraftHUD:SetHotbarIcon(MinecraftHUD._hud_data.SLOT_GRENADE,nil,nil,nil,data.amount,nil)
+		end
+	end
 end)
 
 Hooks:PostHook(HUDTeammate,"set_ability_icon","mchud_teammate_setabilityicon",function(self,icon)
@@ -537,15 +579,19 @@ Hooks:PostHook(HUDTeammate,"set_grenade_cooldown","mchud_teammate_setgrenadecool
 	if self._main_player then 
 		if data then 
 			local end_time = data.end_time
-			local duration = data.duration
+			local total_duration = data.duration
 			
-	--		local t = managers.game_play_central:get_heist_timer()
+			local t = managers.game_play_central:get_heist_timer()
 			
-	--		local progress = 1 - time_left / duration
+			local duration_left = total_duration
+			local from = 0
+			local to = 1
+			if end_time then 
+				duration_left = end_time - t
+				from = 1 - (duration_left / total_duration)
+			end
 			
-			
-			--todo track progress in cache to set/get proper start/end
-			MinecraftHUD:AnimateDurabilityBar(MinecraftHUD._hud_data.SLOT_GRENADE,0,1,duration)
+			MinecraftHUD:AnimateDurabilityBar(MinecraftHUD._hud_data.SLOT_GRENADE,from,to,duration_left)
 		else
 			--set greyed out
 		end
