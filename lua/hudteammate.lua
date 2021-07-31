@@ -9,6 +9,11 @@ Hooks:Add("MinecraftHUDOnTeammateInit","mchud_setcabletiesicon",function(i,teamm
 end)
 --creation
 Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teammates_panel, is_player, width)
+	
+	if alive(self._panel) then 
+		self._panel:hide()
+	end
+	
 	if not is_player then return end
 	
 --get some useful minecrafthud "tweakdata" values
@@ -294,6 +299,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 		name = "nametag",
 		text = managers.network.account:username(),
 		color = Color.white,
+		y = 16,
 --		y = xp_panel:y() - nametag_font_size,
 		font = font_data.minecraft,
 		font_size = nametag_font_size,
@@ -312,6 +318,20 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 	local center_x = vitals_panel:w() / 2
 	local armor_y = health_y - (DEFAULT_SIZE * 2.1)
 	for i = 1,ARMOR_TICKS do 
+		local tick_x = center_x - ((i + 1) * (DEFAULT_SIZE - 4))
+		local texture,texture_rect = get_icon("armor_blue_full")
+		vitals_panel:bitmap({
+			name = "absorption_tick_" .. i,
+			texture = texture,
+			texture_rect = texture_rect,
+			w = DEFAULT_SIZE,
+			h = DEFAULT_SIZE,
+			x = tick_x,
+			y = armor_y,
+			layer = 4 + i,
+			visible = false
+		})
+		
 		local texture,texture_rect = get_icon("armor_full")
 		vitals_panel:bitmap({
 			name = "armor_tick_" .. i,
@@ -319,7 +339,7 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			texture_rect = texture_rect,
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
-			x = center_x - ((i + 1) * (DEFAULT_SIZE - 4)),
+			x = tick_x,
 			y = armor_y,
 			layer = 3 + i
 		})
@@ -329,6 +349,34 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 		}
 	end
 	for i = 1,HEALTH_TICKS do
+		local tick_x = center_x - ((i + 1) * (DEFAULT_SIZE - 4))
+		local tick_y = health_y - (DEFAULT_SIZE)
+		
+		local texture,texture_rect = get_icon("health_goldenapple_full")
+		vitals_panel:bitmap({
+			name = "stored_health_tick_" .. i,
+			texture = texture,
+			texture_rect = texture_rect,
+			w = DEFAULT_SIZE,
+			h = DEFAULT_SIZE,
+			x = tick_x,
+			y = tick_y,
+			layer = 7 + i,
+			visible = false
+		})
+		
+		local texture,texture_rect = get_icon("health_wither_full")
+		vitals_panel:bitmap({
+			name = "delayed_damage_health_tick_" .. i,
+			texture = texture,
+			texture_rect = texture_rect,
+			w = DEFAULT_SIZE,
+			h = DEFAULT_SIZE,
+			x = tick_x,
+			y = tick_y,
+			layer = 6 + i,
+			visible = false
+		})
 		local texture,texture_rect = get_icon("health_heart_full")
 		vitals_panel:bitmap({
 			name = "health_tick_" .. i,
@@ -336,8 +384,8 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			texture_rect = texture_rect,
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
-			x = center_x - ((i + 1) * (DEFAULT_SIZE - 4)),
-			y = health_y - (DEFAULT_SIZE),
+			x = tick_x,
+			y = tick_y,
 			layer = 5 + i
 		})
 		local texture,texture_rect = get_icon("health_heart_full")
@@ -347,8 +395,8 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			texture_rect = texture_rect,
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
-			x = center_x - ((i + 1) * (DEFAULT_SIZE - 4)),
-			y = health_y - (DEFAULT_SIZE),
+			x = tick_x,
+			y = tick_y,
 			layer = 4 + i,
 			visible = false
 		})
@@ -359,8 +407,8 @@ Hooks:PostHook(HUDTeammate,"init","mchud_teammate_init",function(self,_i, teamma
 			texture_rect = texture_rect,
 			w = DEFAULT_SIZE,
 			h = DEFAULT_SIZE,
-			x = center_x - ((i + 1) * (DEFAULT_SIZE - 4)),
-			y = health_y - (DEFAULT_SIZE),
+			x = tick_x,
+			y = tick_y,
 			layer = 3 + i
 		})
 		

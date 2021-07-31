@@ -34,8 +34,8 @@
 			"script_path" : "lua/hudhitconfirm.lua"
 		},
 		{
-			"hook_id" : "lib/managers/hud/hudstatsscreen",
-			"script_path" : "lua/hudstatsscreen.lua"
+			"hook_id" : "lib/managers/hud/newhudstatsscreen",
+			"script_path" : "lua/newhudstatsscreen.lua"
 		},
 		{
 			"hook_id" : "lib/managers/dynamicresourcemanager",

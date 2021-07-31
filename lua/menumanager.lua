@@ -4,7 +4,7 @@
 		tick bouncing animations
 		figure out a melee slot, swap selection box to it while melee is active
 		deployable selection box
-		
+		firemode indicator
 		system for tracking and stopping specific animations by thread
 
 		
@@ -43,7 +43,7 @@
 			6. cableties
 			7. bodybags
 			8. lootbag
-			9. pagers? melee?
+			9. melee?
 			
 			- offhand weapon?
 		- minecraft crit meter is throwable cooldown meter
@@ -76,11 +76,13 @@
 
 
 > assets todo:
-	* better non-outlined, shadowed font
-	* minecraft bow icon (default weapon)
-		- draw "animation" on hotbar when adsing?
+	* blue outlined health hearts for expres stored health
+	* improve shadowed font
+	* improve nonshadowed font
+	* improve outlined font
 	* status effects interface in ui, for buffs panel later
 > how am i going to make the character in the inventory screen
+f3 screen (april fool's)
 
 --]]
 
@@ -109,8 +111,10 @@ MinecraftHUD._color_data = {
 }
 
 MinecraftHUD._fonts = {
-	minecraft = "fonts/minecraftia",
+	minecraft = "fonts/minecraftia_shadow",
+	minecraft_noshadow = "fonts/minecraftia",
 	minecraft_outline = "fonts/minecraftia_outline"
+--	minecraft_outline = "fonts/minecraftia_outline"
 }
 
 MinecraftHUD._textures = {
@@ -649,22 +653,21 @@ function MinecraftHUD.get_atlas_icon(name)
 	return
 end
 
-function MinecraftHUD.old_get_atlas_icon(name)
-	local item = (type(name) == "table" and name) or MinecraftHUD._hud_data.atlas[name]
-	if item then 
-		local x,y,size = unpack(item)
-		size = size or MinecraftHUD._hud_data.size
-		return {size * x, size * y, size, size}
-	end
-	return {0,0,size,size}
-end
-
-
 function MinecraftHUD.get_peer_id_by_panel_id(panel_id)
+	for id, data in pairs(managers.criminals._characters) do
+		if data.taken and data.data.panel_id == panel_id then
+			return data.peer_id
+		end
+	end
 	return 1
 end
 
 function MinecraftHUD.get_panel_id_by_peer_id(peer_id)
+	for id, data in pairs(managers.criminals._characters) do
+		if data.taken and data.peer_id == peer_id then
+			return data.data.panel_id
+		end
+	end
 	return 4
 end
 
